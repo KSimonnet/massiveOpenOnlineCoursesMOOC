@@ -23,30 +23,37 @@ My end goal is to [..]
    - item 2
 
 In the table below:
+
 | ---------- | ---------- |
 | Element	| Markdown Syntax |
 | Italic | *italicized text* |
+
 ---
 
 **Expected Behavior**
 
-: definition: fs is a Node.js built-in module.
-: It does things which browsers do not allow JavaScript to do (like ~~~access the file system~~~).
+Definition List
+: fs is a Node.js built-in module.
+: It does things which browsers do not allow JavaScript to do (like ~~access the file system~~).
 
 **Actual Behavior**
 
-Error: Uncaught TypeError: Failed to resolve module specifier "fs". Relative references must start with either "/", "./", or "../"
+> Error: Uncaught TypeError: Failed to resolve module specifier "fs". Relative references must start with either "/", "./", or "../"
+
 Image	![alt text](image.jpg)
 
 **Proposed solution**
 
 TODO:
-- [] Write a web service in Node.js (the Express.js module is useful here)
-- [] Access it from the browser using Ajax (e.g. the fetch API). ==This will deal with the server's file system, not the browser's==.
+- [x] Write a web service in Node.js (the Express.js module is useful here)
+- [ ] Access it from the browser using Ajax (e.g. the fetch API).
+
+==This will deal with the server's file system, not the browser's==
 
 from [title](https://stackoverflow.com/questions/72458428/uncaught-typeerror-failed-to-resolve-module-specifier-fs-relative-references) :joy:
 
-[^1]: footnote
-
 Subscript	H~2~O
+
 Superscript	X^2^
+
+[^1]: footnote
