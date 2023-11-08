@@ -24,8 +24,8 @@ My end goal is to [..]
 
 In the table below:
 
-| ---------- | ---------- |
 | Element	| Markdown Syntax |
+| ---------- | ---------- |
 | Italic | *italicized text* |
 
 ---
@@ -48,7 +48,7 @@ TODO:
 - [x] Write a web service in Node.js (the Express.js module is useful here)
 - [ ] Access it from the browser using Ajax (e.g. the fetch API).
 
-==This will deal with the server's file system, not the browser's==
+highlight these ==This will deal with the server's file system, not the browser's==
 
 from [title](https://stackoverflow.com/questions/72458428/uncaught-typeerror-failed-to-resolve-module-specifier-fs-relative-references) :joy:
 
