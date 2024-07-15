@@ -106,7 +106,7 @@ async function signup() {
       user_name: credentials.user_name,
       password_hash: credentials.password_hash,
     };
-    const requestData = {
+    const request_data = {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -115,7 +115,7 @@ async function signup() {
     };
 
     // make an HTTP POST request to the Back-End server
-    const response = await fetch("http://localhost:3000/signup", requestData);
+    const response = await fetch("http://localhost:3000/signup", request_data);
 
     // Provide feedback to the user as to:
     // - Invalid username or password
@@ -146,7 +146,7 @@ async function BrowseMovies() {
     if (!response.ok) {
       console.error(`${movies.error}`);
     }
-    // check if "success" is a property of `is_authenticated` (not inherited through the prototype chain). `"success" in is_authenticated` https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/in
+    // check if "success" is a property of `movies` (not inherited through the prototype chain). `"success" in is_authenticated` https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/in
     if (Object.prototype.hasOwnProperty.call(movies, "success")) {
       // display list of available movies
       console.log(`${movies.success}: ${movies.list}`);
@@ -185,7 +185,7 @@ async function searchMovies() {
     if (!response.ok) {
       console.error(`${movie.error}`);
     }
-    // check if "success" is a property of `is_authenticated` (not inherited through the prototype chain). `"success" in is_authenticated` https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/in
+    // check if "success" is a property of `movie` (not inherited through the prototype chain). `"success" in is_authenticated` https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/in
     if (Object.prototype.hasOwnProperty.call(movie, "success")) {
       // movie requested by user is available
       console.log(`${movie.success}: ${movie.movie}`);
@@ -203,7 +203,7 @@ async function addMovie() {
     {
       type: "input",
       name: "title",
-      message: "Enter your username:",
+      message: "Enter the name of the movie you'd like to add: ",
       required: true,
       validate: function (user_input: string) {
         // keep prompting user until a valid username is provided
@@ -216,34 +216,38 @@ async function addMovie() {
     {
       type: "input",
       name: "cast",
-      message: "Enter the name of the main actor/actress:",
+      message: "Enter the name of the main actor/actress: ",
     },
     {
       type: "input",
       name: "category",
-      message: "Enter the category the movie belongs to:",
+      message: "Enter the category the movie belongs to: ",
     },
   ]);
 
   try {
     // Construct the request data
-    const user = {
-      user_name: credentials.user_name,
-      password_hash: credentials.password_hash,
+    const movie = {
+      title: credentials.title,
+      cast: credentials.cast,
+      category: credentials.category,
     };
-    const requestData = {
+    const request_data = {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(user),
+      body: JSON.stringify(movie),
     };
 
     // make an HTTP POST request to the Back-End server
-    const response = await fetch("http://localhost:3000/signup", requestData);
+    const response = await fetch(
+      "http://localhost:3000/addmovie",
+      request_data,
+    );
     const res = await response.json();
 
-    // check if "success" is a property of `is_authenticated` (not inherited through the prototype chain). `"success" in is_authenticated` https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/in
+    // check if "success" is a property of the Object (not inherited through the prototype chain). `"success" in is_authenticated` https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/in
     if (Object.prototype.hasOwnProperty.call(res, "success")) {
       //
       console.log(`${res.success}`);
@@ -288,7 +292,7 @@ async function displayMovieOptions() {
         await searchMovies();
         break;
       case "Add a new movie":
-        await searchMovies();
+        await addMovie();
         break;
       case "Logout":
         console.log("Logout successful!"); // Provide feedback to the user
