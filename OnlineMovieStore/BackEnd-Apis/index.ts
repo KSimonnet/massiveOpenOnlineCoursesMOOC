@@ -8,7 +8,7 @@ app.use(cors());
 app.use(bodyParser.json());
 
 const connectionString =
-  "server=SERVERNAME;Database=OnlineMovieStore;Trusted_Connection=Yes;Driver={ODBC Driver 17 for SQL Server}"; //ADD YOUR CONNECTION STRING HERE
+  "server=SERVERNAME;Database=OnlineMovieStore;Trusted_Connection=Yes;Driver={ODBC Driver 17 for SQL Server}"; //
 
 app.post("/login", (req: any, res: any) => {
   try {
@@ -84,7 +84,7 @@ app.post("/signup", (req: any, res: any) => {
           // if user exists, return notification
           console.log("Existing account: ", rows);
           return res
-            .status(409)
+            .status(401)
             .json({ error: "This username is already taken." });
         } else {
           // insert new user
@@ -101,13 +101,13 @@ app.post("/signup", (req: any, res: any) => {
               if (err) {
                 console.error("SQL query error: ", err.message);
                 return res
-                  .status(500)
+                  .status(501)
                   .json({ error: "Internal server error." });
               }
               if (resultset && resultset.length > 0) {
                 console.log("Added account: ", resultset);
                 return res
-                  .status(201)
+                  .status(200)
                   .json({ success: "User created successfully." });
               } // result set is the collection of rows returned by `OUTPUT`. https://learn.microsoft.com/en-us/sql/t-sql/statements/insert-transact-sql?view=sql-server-ver16#t-using-output-with-an-insert-statement
             },
@@ -138,13 +138,13 @@ app.get("/movies", ({ req, res }: any) => {
         return res.status(200).json({ success: "Movies found." });
       } else {
         return res
-          .status(401)
+          .status(400)
           .json({ error: "Sorry, we've no movies available at the moment." });
       }
     });
   } catch (error: any) {
     console.error("An error occurred:", error.message);
-    res.status(500).json({ error: "Internal server error." });
+    res.status(501).json({ error: "Internal server error." });
   }
 });
 
@@ -176,7 +176,7 @@ app.get("/movie/:name", async (req: any, res: any) => {
               .status(200)
               .json({ success: "We've found your requested movie: " });
           } else {
-            return res.status(401).json({
+            return res.status(400).json({
               error: "Sorry, this movie is not in store at the moment.",
             });
           }
@@ -185,7 +185,7 @@ app.get("/movie/:name", async (req: any, res: any) => {
     }
   } catch (err: any) {
     console.error("An error occurred: ", err.message);
-    return res.status(500).json(err);
+    return res.status(501).json(err);
   }
 });
 
@@ -210,13 +210,13 @@ app.post("/movie", async (req: any, res: any) => {
           .json({ success: "We've found your requested movie: " });
       } else {
         return res
-          .status(401)
+          .status(400)
           .json({ error: "Sorry, this movie is not in store at the moment." });
       }
     });
   } catch (err: any) {
     console.error("An error occurred: ", err.message);
-    return res.status(500).json({ error: "Internal server error." });
+    return res.status(501).json({ error: "Internal server error." });
   }
 });
 
