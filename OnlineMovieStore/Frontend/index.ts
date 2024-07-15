@@ -144,12 +144,14 @@ async function BrowseMovies() {
     This getter function checks the status property of the `Response` object and
     returns `true` if the status is in the range 200–299, indicating a successful response */
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      console.error(`${movies.error}`);
     }
     if (movies.length) {
-      console.log("Movie list: ", movies);
+      // display list of available movies
+      console.log(`${movies.success}: ${movies.list}`);
     } else {
-      console.log("Sorry, we've no movie in store at present.");
+      // inform user no movie is ain store
+      console.log(movies.failure);
     }
   } catch (error: any) {
     console.error("An error occurred:", error.message);
@@ -178,13 +180,23 @@ async function searchMovies() {
     //ADD YOUR CODE HERE
     const response = await fetch(url);
     const movie = await response.json();
+
+    if (!response.ok) {
+      console.error(`${movie.error}`);
+    }
+    if (movie.length) {
+      console.log(`${movie.success}: ${movie.movie}`);
+    } else {
+      console.log(movie.failure);
+    }
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     if (movie.length) {
-      console.log("We found the movie you wanted: ", movie);
+      console.log(`${movie.success}: ${movie.movie}`);
     } else {
-      console.log(movie.error);
+      console.log(movie.failure);
     }
   } catch (error: any) {
     console.error("An error occurred:", error.message);
@@ -245,7 +257,7 @@ async function addMovie() {
       return response;
     } else {
       // invalid credentials or username taken
-      console.log(res.error);
+      console.log(res.failure);
       return null; // indicates login failure
     }
   } catch (error: any) {

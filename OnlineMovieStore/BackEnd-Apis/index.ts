@@ -135,7 +135,7 @@ app.get("/movies", ({ req, res }: any) => {
       }
       if (rows.length > 0) {
         console.log("Credentials validated: ", rows);
-        return res.status(200).json({ success: "Movie list: ", rows });
+        return res.status(200).json({ success: "Movie list: ", list: rows });
       } else {
         return res
           .status(400)
@@ -172,9 +172,10 @@ app.get("/movie/:name", async (req: any, res: any) => {
           }
           if (rows.length > 0) {
             console.log("Movie found: ", rows);
-            return res
-              .status(200)
-              .json({ success: "We've found your requested movie: " });
+            return res.status(200).json({
+              success: "We found the movie you wanted: ",
+              movie: rows,
+            });
           } else {
             return res.status(400).json({
               failure: "Sorry, this movie is not in store at the moment.",
@@ -209,11 +210,9 @@ app.post("/movie", async (req: any, res: any) => {
           .status(200)
           .json({ success: "We've found your requested movie: " });
       } else {
-        return res
-          .status(400)
-          .json({
-            failure: "Sorry, this movie is not in store at the moment.",
-          });
+        return res.status(400).json({
+          failure: "Sorry, this movie is not in store at the moment.",
+        });
       }
     });
   } catch (err: any) {
