@@ -3,6 +3,7 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const sql = require("msnodesqlv8");
 const app = express();
+const { namingConvention } = require("./utils/manip-str/index.js");
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -14,7 +15,7 @@ app.post("/login", (req: any, res: any) => {
   try {
     const { user_name, password_hash } = req.body;
 
-    // Ensure that both username and password_hash are provided in the request body
+    // in ER Diagram, "Allow NULL" is set to false for both, `user_name` and `password_hash`. Ensure they're provided in the request body
     if (!user_name || !password_hash) {
       return res
         .status(400)
@@ -59,7 +60,7 @@ app.post("/signup", (req: any, res: any) => {
   try {
     const { user_name, password_hash } = req.body;
 
-    // Ensure that both username and password_hash are provided in the request body
+    // in ER Diagram, "Allow NULL" is set to false for both, `user_name` and `password_hash`. Ensure they're provided in the request body
     if (!user_name || !password_hash) {
       return res
         .status(400)
@@ -148,6 +149,51 @@ app.get("/movies", ({ req, res }: any) => {
   }
 });
 
+// CRUD - Create
+app.post("/addmovie", async (req: any, res: any) => {
+  try {
+    // capitalize the first letter of each word
+    const pascal_case_req = Object.fromEntries(
+      Object.entries(req.body).map(([key, value]) => [
+        key,
+        value ? namingConvention.toPascalCase(value) : value,
+      ]),
+    );
+    const { title, cast, category } = pascal_case_req;
+
+    // in ER Diagram, "Allow NULL" is set to false for `title`. Ensure it's provided in the request body
+    if (!title) {
+      return res.status(400).json({ error: "Movie title is required." });
+    }
+    var query = `INSERT INTO Movie (title, cast, category) OUTPUT INSERTED.title, INSERTED.cast , INSERTED.category VALUES (?, ?, ?)`; // OUTPUT clause captures inserted attributes to be displayed in the front-end
+
+    sql.query(
+      connectionString,
+      query,
+      [title, cast, category],
+      (err: any, resultset: any) => {
+        if (err) {
+          // directly exposing error details from the server, especially those originating from a database,
+          // can provide attackers with insights into the backend structure, database schema, or even potential vulnerabilities.
+          // In addition, a generic error message is more user-friendly
+          console.error("SQL query error: ", err.message);
+          return res.status(500).json({ error: "Internal server error." });
+        }
+        if (resultset && resultset.length > 0) {
+          console.log("Movie added to DB: ", resultset);
+          return res
+            .status(200)
+            .json({ success: "Movie added successfully.", movie: resultset });
+        }
+      },
+    );
+  } catch (err: any) {
+    console.error("An error occurred: ", err.message);
+    return res.status(501).json({ error: "Internal server error." });
+  }
+});
+
+// CRUD - Review
 app.get("/movie/:name", async (req: any, res: any) => {
   try {
     // type was already validated in Front-End; defined for clarity
@@ -190,36 +236,7 @@ app.get("/movie/:name", async (req: any, res: any) => {
   }
 });
 
-// CRUD
-app.post("/movie", async (req: any, res: any) => {
-  try {
-    const { name } = req.body;
-    var query = `INSERT INTO Movie (name) VALUES (?)`;
-
-    sql.query(connectionString, query, [name], (err: any, rows: any) => {
-      if (err) {
-        // directly exposing error details from the server, especially those originating from a database,
-        // can provide attackers with insights into the backend structure, database schema, or even potential vulnerabilities.
-        // In addition, a generic error message is more user-friendly
-        console.error("SQL query error: ", err.message);
-        return res.status(500).json({ error: "Internal server error." });
-      }
-      if (rows.length > 0) {
-        console.log("Movie found: ", rows);
-        return res
-          .status(200)
-          .json({ success: "We've found your requested movie: " });
-      } else {
-        return res.status(400).json({
-          failure: "Sorry, this movie is not in store at the moment.",
-        });
-      }
-    });
-  } catch (err: any) {
-    console.error("An error occurred: ", err.message);
-    return res.status(501).json({ error: "Internal server error." });
-  }
-});
+// CRUD - Update
 
 // error handling
 // add movies to watchlist
