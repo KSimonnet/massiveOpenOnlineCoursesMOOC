@@ -44,7 +44,7 @@ app.post("/login", (req: any, res: any) => {
         } else {
           return res
             .status(401)
-            .json({ error: "Invalid credentials. Please try again." });
+            .json({ failure: "Invalid credentials. Please try again." });
         }
       },
     );
@@ -85,7 +85,7 @@ app.post("/signup", (req: any, res: any) => {
           console.log("Existing account: ", rows);
           return res
             .status(401)
-            .json({ error: "This username is already taken." });
+            .json({ failure: "This username is already taken." });
         } else {
           // insert new user
           var insert_query = `
@@ -135,11 +135,11 @@ app.get("/movies", ({ req, res }: any) => {
       }
       if (rows.length > 0) {
         console.log("Credentials validated: ", rows);
-        return res.status(200).json({ success: "Movies found." });
+        return res.status(200).json({ success: "Movie list: ", rows });
       } else {
         return res
           .status(400)
-          .json({ error: "Sorry, we've no movies available at the moment." });
+          .json({ failure: "Sorry, we've no movies available at the moment." });
       }
     });
   } catch (error: any) {
@@ -177,7 +177,7 @@ app.get("/movie/:name", async (req: any, res: any) => {
               .json({ success: "We've found your requested movie: " });
           } else {
             return res.status(400).json({
-              error: "Sorry, this movie is not in store at the moment.",
+              failure: "Sorry, this movie is not in store at the moment.",
             });
           }
         },
@@ -211,7 +211,9 @@ app.post("/movie", async (req: any, res: any) => {
       } else {
         return res
           .status(400)
-          .json({ error: "Sorry, this movie is not in store at the moment." });
+          .json({
+            failure: "Sorry, this movie is not in store at the moment.",
+          });
       }
     });
   } catch (err: any) {
@@ -220,6 +222,7 @@ app.post("/movie", async (req: any, res: any) => {
   }
 });
 
+// error handling
 // add movies to watchlist
 // role-based access control, allowing different levels of access for regular users and administrators. Can login as an Admin or User. Administrators (and Users) should be able to add, update, delete, and view movie data.
 // use of TypeScript classes and interfaces to define entities and relationships
