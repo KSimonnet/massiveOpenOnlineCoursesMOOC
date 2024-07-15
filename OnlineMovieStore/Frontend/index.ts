@@ -146,7 +146,8 @@ async function BrowseMovies() {
     if (!response.ok) {
       console.error(`${movies.error}`);
     }
-    if (movies.length) {
+    // check if "success" is a property of `is_authenticated` (not inherited through the prototype chain). `"success" in is_authenticated` https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/in
+    if (Object.prototype.hasOwnProperty.call(movies, "success")) {
       // display list of available movies
       console.log(`${movies.success}: ${movies.list}`);
     } else {
@@ -184,16 +185,9 @@ async function searchMovies() {
     if (!response.ok) {
       console.error(`${movie.error}`);
     }
-    if (movie.length) {
-      console.log(`${movie.success}: ${movie.movie}`);
-    } else {
-      console.log(movie.failure);
-    }
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    if (movie.length) {
+    // check if "success" is a property of `is_authenticated` (not inherited through the prototype chain). `"success" in is_authenticated` https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/in
+    if (Object.prototype.hasOwnProperty.call(movie, "success")) {
+      // movie requested by user is available
       console.log(`${movie.success}: ${movie.movie}`);
     } else {
       console.log(movie.failure);
@@ -203,6 +197,7 @@ async function searchMovies() {
   }
 }
 
+// CRUD
 async function addMovie() {
   const credentials = await inquirer.prompt([
     {
@@ -246,18 +241,16 @@ async function addMovie() {
 
     // make an HTTP POST request to the Back-End server
     const response = await fetch("http://localhost:3000/signup", requestData);
-
-    // Provide feedback to the user as to:
-    // - Invalid username or password
-    // - OR, username already exists
     const res = await response.json();
-    if (response.status === 201 && res.length !== 0) {
-      // Successful login, turns `user` to true, which allows access to `displayMovieOptions()`
-      console.log(res.success);
+
+    // check if "success" is a property of `is_authenticated` (not inherited through the prototype chain). `"success" in is_authenticated` https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/in
+    if (Object.prototype.hasOwnProperty.call(res, "success")) {
+      //
+      console.log(`${res.success}`);
       return response;
     } else {
-      // invalid credentials or username taken
-      console.log(res.failure);
+      //
+      console.log(`${res.failure}`);
       return null; // indicates login failure
     }
   } catch (error: any) {

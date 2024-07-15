@@ -8,7 +8,7 @@ app.use(cors());
 app.use(bodyParser.json());
 
 const connectionString =
-  "server=SERVERNAME;Database=OnlineMovieStore;Trusted_Connection=Yes;Driver={ODBC Driver 17 for SQL Server}"; //
+  "server=SERVERNAME;Database=OnlineMovieStore;Trusted_Connection=Yes;Driver={ODBC Driver 17 for SQL Server}"; // SERVERNAME
 
 app.post("/login", (req: any, res: any) => {
   try {
@@ -134,7 +134,7 @@ app.get("/movies", ({ req, res }: any) => {
         return res.status(500).json({ error: "Internal server error." });
       }
       if (rows.length > 0) {
-        console.log("Credentials validated: ", rows);
+        console.log("List of movies sent to Front-End: ", rows);
         return res.status(200).json({ success: "Movie list: ", list: rows });
       } else {
         return res
