@@ -1,5 +1,5 @@
-import inquirer from "inquirer";
-import { getLoginCred } from "./modules/get-login-cred.ts";
+import * as inquirer from "inquirer";
+import { getLoginCred } from "./modules/get-login-cred";
 
 // // `MovieRequest` is a custom type for the request that leverages TypeScript to enforce the types at compile time,
 // // rather than running runtime checks.
@@ -32,8 +32,11 @@ async function login() {
     }
     // check if "success" is a property of `is_authenticated` (not inherited through the prototype chain). `"success" in is_authenticated` https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/in
     if (Object.prototype.hasOwnProperty.call(is_authenticated, "success")) {
-      return true; // successful login turns `is_authenticated` to true, which allows access to `displayMovieOptions()
+      // a successful login turns `is_authenticated` to true, which allows access to `displayMovieOptions()
+      console.log(`${is_authenticated.success}`);
+      return true;
     } else {
+      console.log(`${is_authenticated.conflict}`);
       return null; // indicates login failure
     }
   } catch (error: any) {
