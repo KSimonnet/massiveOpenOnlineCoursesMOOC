@@ -152,12 +152,14 @@ async function BrowseMovies() {
       console.log(`${movies.success}: ${movies.list}`);
     } else {
       // inform user no movie is ain store
-      console.log(movies.conflict);
+      console.log(`${movies.conflict}`);
     }
   } catch (error: any) {
     console.error("An error occurred:", error.message);
   }
 }
+
+// CRUD - Read
 async function searchMovies() {
   const requested_movie = await inquirer.prompt([
     {
@@ -190,14 +192,14 @@ async function searchMovies() {
       // movie requested by user is available
       console.log(`${movie.success}: ${movie.movie}`);
     } else {
-      console.log(movie.conflict);
+      console.log(`${movie.conflict}`);
     }
   } catch (error: any) {
     console.error("An error occurred:", error.message);
   }
 }
 
-// CRUD
+// CRUD - Create
 async function addMovie() {
   const credentials = await inquirer.prompt([
     {
@@ -250,12 +252,10 @@ async function addMovie() {
     // check if "success" is a property of the Object (not inherited through the prototype chain). `"success" in is_authenticated` https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/in
     if (Object.prototype.hasOwnProperty.call(res, "success")) {
       //
-      console.log("test - success");
       console.log(`${res.success}`);
       return response;
     } else {
       //
-      console.log("res: ", res);
       console.log(`${res.conflict}`);
       return null; // indicates login failure
     }
