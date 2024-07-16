@@ -9,7 +9,7 @@ app.use(cors());
 app.use(bodyParser.json());
 
 const connectionString =
-  "server=SERVERNAME;Database=OnlineMovieStore;Trusted_Connection=Yes;Driver={ODBC Driver 17 for SQL Server}"; // SERVERNAME
+  "server=ADMINLenovo;Database=OnlineMovieStore;Trusted_Connection=Yes;Driver={ODBC Driver 17 for SQL Server}"; // SERVERNAME
 
 app.post("/login", (req: any, res: any) => {
   try {
@@ -23,7 +23,7 @@ app.post("/login", (req: any, res: any) => {
     }
 
     // Create a query to validate user credentials and return response
-    var check_query = `SELECT user_name, password_hash FROM Account WHERE user_name = ? AND password_hash = ?`;
+    const check_query = `SELECT user_name, password_hash FROM Account WHERE user_name = ? AND password_hash = ?`;
     // the callback function of sql.query, whislt not async, is executed asynchronously
     // `try...catch` block only catches exceptions thrown synchronously within the `try` block
     // hence, exceptions should be directly handled inside the callback, rather being thrown
@@ -68,7 +68,7 @@ app.post("/signup", (req: any, res: any) => {
     }
 
     // check if user_name already exists
-    var check_query = `SELECT user_name FROM Account WHERE user_name = ?`;
+    const check_query = `SELECT user_name FROM Account WHERE user_name = ?`;
     sql.query(
       connectionString,
       check_query,
@@ -89,7 +89,7 @@ app.post("/signup", (req: any, res: any) => {
             .json({ failure: "This username is already taken." });
         } else {
           // insert new user
-          var insert_query = `
+          const insert_query = `
             INSERT INTO Account (user_name, password_hash)
             OUTPUT INSERTED.user_name, INSERTED.password_hash
             VALUES (?, ?);
@@ -124,7 +124,7 @@ app.post("/signup", (req: any, res: any) => {
 
 app.get("/movies", ({ req, res }: any) => {
   try {
-    var list_query = "SELECT title, cast, category FROM  Movie";
+    const list_query = "SELECT title, cast, category FROM  Movie";
     // sends to the Front-End a list of all the movies in store
     sql.query(connectionString, list_query, (err: any, rows: any) => {
       if (err) {
@@ -165,12 +165,22 @@ app.post("/addmovie", async (req: any, res: any) => {
     if (!title) {
       return res.status(400).json({ error: "Movie title is required." });
     }
-    var query = `INSERT INTO Movie (title, cast, category) OUTPUT INSERTED.title, INSERTED.cast , INSERTED.category VALUES (?, ?, ?)`; // OUTPUT clause captures inserted attributes to be displayed in the front-end
-
+    // check if movie already exists
+    const query = `
+  IF NOT EXISTS (SELECT 1 FROM Movie WHERE title = ?)
+  BEGIN
+    INSERT INTO Movie (title, cast, category) OUTPUT INSERTED.title, INSERTED.cast , INSERTED.category VALUES (?, ?, ?)
+  END
+`; /* `SELECT 1` does not retrieve any actual data from the column(s) of the table;
+it simply returns the number `1` for each row that meets the condition.
+The database engine stops scanning as soon as it finds the first matching row.
+The placeholders (?) are positional ie. for `NOT EXISTS`, the first `?` taps into the first element in the array of the parametrised query.
+In order, the next elements are used for `INSERT INTO`. `title` is passed onto both queries, hence needs to be repeated.
+OUTPUT clause captures inserted attributes to be displayed in the front-end (https://learn.microsoft.com/en-us/sql/t-sql/queries/output-clause-transact-sql?view=sql-server-ver16#a-use-output-into-with-an-insert-statement) */
     sql.query(
       connectionString,
       query,
-      [title, cast, category],
+      [title, title, cast, category],
       (err: any, resultset: any) => {
         if (err) {
           // directly exposing error details from the server, especially those originating from a database,
@@ -184,6 +194,12 @@ app.post("/addmovie", async (req: any, res: any) => {
           return res
             .status(200)
             .json({ success: "Movie added successfully.", movie: resultset });
+        } else {
+          // in case the movie already exists, the `INSERT INTO` + `OUTPUT` don't get executed.
+          //  and no new row is inserted
+          return res.status(409).json({
+            error: "This movie already exists. Please try a different title.",
+          });
         }
       },
     );
