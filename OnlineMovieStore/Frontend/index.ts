@@ -1,4 +1,5 @@
-const inquirer = require("inquirer");
+import inquirer from "inquirer";
+import { getLoginCred } from "./modules/get-login-cred.ts";
 
 // // `MovieRequest` is a custom type for the request that leverages TypeScript to enforce the types at compile time,
 // // rather than running runtime checks.
@@ -11,35 +12,7 @@ const inquirer = require("inquirer");
 
 async function login() {
   // runtime parameters check
-  const credentials = await inquirer.prompt([
-    {
-      type: "input",
-      name: "user_name",
-      message: "Enter your username:",
-      // in ER Diagram, "Allow NULL" is set to false for `user_name` and `password_hash`
-      required: true,
-      // Inquirer.js coerces input as a string, since command line input is inherently string-based
-      validate: function (user_input: string) {
-        // keep prompting user until a valid username is provided
-        if (!user_input) {
-          return "Username cannot be empty.";
-        }
-        return true;
-      },
-    },
-    {
-      type: "password",
-      name: "password_hash",
-      message: "Enter your password:",
-      required: true,
-      validate: function (user_input: string) {
-        if (!user_input) {
-          return "Password cannot be empty.";
-        }
-        return true;
-      },
-    },
-  ]);
+  const credentials = await getLoginCred();
 
   try {
     const url = "http://localhost:3000/login";
@@ -53,6 +26,7 @@ async function login() {
     });
 
     const is_authenticated: any = await response.json();
+    // Boolean stating whether the response was successful (status in the range 200-299) or not (https://developer.mozilla.org/en-US/docs/Web/API/Response/ok)
     if (!response.ok) {
       console.error(`${is_authenticated.error}`);
     }
@@ -69,40 +43,11 @@ async function login() {
 }
 
 async function signup() {
-  const credentials = await inquirer.prompt([
-    {
-      type: "input",
-      name: "user_name",
-      message: "Enter your username: ",
-      // in ER Diagram, "Allow NULL" is set to false for `user_name` and `password_hash`
-      required: true,
-      // Inquirer.js coerces input as a string, since command line input is inherently string-based
-      validate: function (user_input: string) {
-        // keep prompting user until a valid username is provided
-        if (!user_input) {
-          return "Username cannot be empty.";
-        }
-        return true;
-      },
-    },
-    {
-      type: "password",
-      name: "password_hash",
-      message: "Enter your password:",
-      required: true,
-      validate: function (user_input: string) {
-        // keep prompting user until a valid username is provided
-        if (!user_input) {
-          return "Password cannot be empty.";
-        }
-        return true;
-      },
-    },
-  ]);
+  const credentials = await getLoginCred();
 
   try {
-    // Construct the request data
-    const user = {
+    // Construct the request data -hard-coded
+    const user: object = {
       user_name: credentials.user_name,
       password_hash: credentials.password_hash,
     };
@@ -179,8 +124,6 @@ async function searchMovies() {
   const movie_name = requested_movie.movie_name;
   try {
     const url = `http://localhost:3000/movie/${movie_name}`;
-
-    //ADD YOUR CODE HERE
     const response = await fetch(url);
     const movie = await response.json();
 
@@ -257,13 +200,17 @@ async function addMovie() {
     } else {
       //
       console.log(`${res.conflict}`);
-      return null; // indicates login failure
+      return null;
     }
   } catch (error: any) {
     console.error("An error occurred:", error.message);
     return null;
   }
 }
+
+// CRUD - Update
+
+// CRUD - Delete
 
 async function displayMovieOptions() {
   console.log("Welcome to the Online Movie Store!");
