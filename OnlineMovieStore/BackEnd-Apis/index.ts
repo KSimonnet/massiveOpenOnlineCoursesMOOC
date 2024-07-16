@@ -23,7 +23,7 @@ app.post("/login", (req: any, res: any) => {
     }
 
     // Create a query to validate user credentials and return response
-    const check_query = `SELECT user_name, password_hash FROM Account WHERE user_name = ? AND password_hash = ?`;
+    const check_query = `SELECT user_name, password_hash FROM Account WHERE user_name = ? AND password_hash = ?`; // https://learn.microsoft.com/en-us/sql/odbc/reference/develop-app/statement-parameters?view=sql-server-ver16
     // the callback function of sql.query, whislt not async, is executed asynchronously
     // `try...catch` block only catches exceptions thrown synchronously within the `try` block
     // hence, exceptions should be directly handled inside the callback, rather being thrown
@@ -39,13 +39,14 @@ app.post("/login", (req: any, res: any) => {
           console.error("SQL query error: ", err.message);
           return res.status(500).json({ error: "Internal server error." });
         }
-        if (rows.length > 0) {
+        // handle case where `rows` is undefined or null
+        if (rows && rows.length) {
           console.log("Credentials validated: ", rows);
           return res.status(200).json({ success: "User authenticated." });
         } else {
           return res
             .status(401)
-            .json({ failure: "Invalid credentials. Please try again." });
+            .json({ conflict: "Invalid credentials. Please try again." });
         }
       },
     );
@@ -81,12 +82,12 @@ app.post("/signup", (req: any, res: any) => {
           console.error("SQL query error: ", err.message);
           return res.status(500).json({ error: "Internal server error." });
         }
-        if (rows.length > 0) {
+        if (rows && rows.length) {
           // if user exists, return notification
           console.log("Existing account: ", rows);
           return res
             .status(401)
-            .json({ failure: "This username is already taken." });
+            .json({ conflict: "This username is already taken." });
         } else {
           // insert new user
           const insert_query = `
@@ -105,7 +106,7 @@ app.post("/signup", (req: any, res: any) => {
                   .status(501)
                   .json({ error: "Internal server error." });
               }
-              if (resultset && resultset.length > 0) {
+              if (resultset && resultset.length) {
                 console.log("Added account: ", resultset);
                 return res
                   .status(200)
@@ -134,13 +135,13 @@ app.get("/movies", ({ req, res }: any) => {
         console.error("SQL query error: ", err.message);
         return res.status(500).json({ error: "Internal server error." });
       }
-      if (rows.length > 0) {
+      if (rows && rows.length) {
         console.log("List of movies sent to Front-End: ", rows);
         return res.status(200).json({ success: "Movie list: ", list: rows });
       } else {
-        return res
-          .status(400)
-          .json({ failure: "Sorry, we've no movies available at the moment." });
+        return res.status(409).json({
+          conflict: "Sorry, we've no movies available at the moment.",
+        });
       }
     });
   } catch (error: any) {
@@ -169,13 +170,15 @@ app.post("/addmovie", async (req: any, res: any) => {
     const query = `
   IF NOT EXISTS (SELECT 1 FROM Movie WHERE title = ?)
   BEGIN
-    INSERT INTO Movie (title, cast, category) OUTPUT INSERTED.title, INSERTED.cast , INSERTED.category VALUES (?, ?, ?)
+    INSERT INTO Movie (title, cast, category) OUTPUT INSERTED.* VALUES (?, ?, ?)
   END
 `; /* `SELECT 1` does not retrieve any actual data from the column(s) of the table;
 it simply returns the number `1` for each row that meets the condition.
 The database engine stops scanning as soon as it finds the first matching row.
-The placeholders (?) are positional ie. for `NOT EXISTS`, the first `?` taps into the first element in the array of the parametrised query.
-In order, the next elements are used for `INSERT INTO`. `title` is passed onto both queries, hence needs to be repeated.
+Placeholders (?) are positional ie. for `NOT EXISTS`, the first `?` taps into the first element in the array of the parametrised query.
+In index order, the next elements are used for `INSERT INTO`. Since `title` is passed onto both queries, it needs to be repeated.
+In a stored procedure, we could use named parameters e.g. @title https://learn.microsoft.com/en-us/sql/odbc/reference/develop-app/binding-parameters-by-name-named-parameters?view=sql-server-ver16
+
 OUTPUT clause captures inserted attributes to be displayed in the front-end (https://learn.microsoft.com/en-us/sql/t-sql/queries/output-clause-transact-sql?view=sql-server-ver16#a-use-output-into-with-an-insert-statement) */
     sql.query(
       connectionString,
@@ -183,22 +186,22 @@ OUTPUT clause captures inserted attributes to be displayed in the front-end (htt
       [title, title, cast, category],
       (err: any, resultset: any) => {
         if (err) {
-          // directly exposing error details from the server, especially those originating from a database,
-          // can provide attackers with insights into the backend structure, database schema, or even potential vulnerabilities.
-          // In addition, a generic error message is more user-friendly
+          /* directly exposing error details from the server, especially those originating from a database,
+          can provide attackers with insights into the backend structure, database schema, or even potential vulnerabilities.
+          In addition, a generic error message is more user-friendly */
           console.error("SQL query error: ", err.message);
           return res.status(500).json({ error: "Internal server error." });
         }
-        if (resultset && resultset.length > 0) {
+        if (resultset && resultset.length) {
           console.log("Movie added to DB: ", resultset);
           return res
             .status(200)
             .json({ success: "Movie added successfully.", movie: resultset });
         } else {
-          // in case the movie already exists, the `INSERT INTO` + `OUTPUT` don't get executed.
-          //  and no new row is inserted
+          // in case the movie already exists, the `INSERT INTO` + `OUTPUT` don't get executed, ie. result set is null
           return res.status(409).json({
-            error: "This movie already exists. Please try a different title.",
+            conflict:
+              "This movie already exists. Please try a different title.",
           });
         }
       },
@@ -214,8 +217,8 @@ app.get("/movie/:name", async (req: any, res: any) => {
   try {
     // type was already validated in Front-End; defined for clarity
     const movie_name: string = req.params.name;
-
-    if (movie_name.length) {
+    // whilst the Front-End checks that `name` is not empty, conditional chaining avoids breaking
+    if (movie_name?.length) {
       // `movie_name` passed as a parameter to the query function,
       // rather than directly by using `${movie_name}` to prevent SQL injection
       const movie_query =
@@ -232,15 +235,15 @@ app.get("/movie/:name", async (req: any, res: any) => {
             console.error("SQL query error: ", err.message);
             return res.status(500).json({ error: "Internal server error." });
           }
-          if (rows.length > 0) {
+          if (rows && rows.length) {
             console.log("Movie found: ", rows);
             return res.status(200).json({
               success: "We found the movie you wanted: ",
               movie: rows,
             });
           } else {
-            return res.status(400).json({
-              failure: "Sorry, this movie is not in store at the moment.",
+            return res.status(409).json({
+              conflict: "Sorry, this movie is not in store at the moment.",
             });
           }
         },
