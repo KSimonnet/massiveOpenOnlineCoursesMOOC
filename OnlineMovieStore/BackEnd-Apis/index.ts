@@ -1,9 +1,10 @@
-const express = require("express");
-const bodyParser = require("body-parser");
-const cors = require("cors");
-const sql = require("msnodesqlv8");
+import * as express from "express";
 const app = express();
-const { namingConvention } = require("./utils/manip-str/index.js");
+import * as bodyParser from "body-parser";
+import * as cors from "cors";
+import * as sql from "msnodesqlv8";
+
+import { toPascalCase } from "./utils/manip-str/index";
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -45,7 +46,7 @@ app.post("/login", (req: any, res: any) => {
           return res.status(200).json({ success: "User authenticated." });
         } else {
           return res
-            .status(401)
+            .status(201)
             .json({ conflict: "Invalid credentials. Please try again." });
         }
       },
@@ -139,7 +140,7 @@ app.get("/movies", ({ req, res }: any) => {
         console.log("List of movies sent to Front-End: ", rows);
         return res.status(200).json({ success: "Movie list: ", list: rows });
       } else {
-        return res.status(409).json({
+        return res.status(201).json({
           conflict: "Sorry, we've no movies available at the moment.",
         });
       }
@@ -154,12 +155,11 @@ app.get("/movies", ({ req, res }: any) => {
 app.post("/addmovie", async (req: any, res: any) => {
   try {
     // capitalize the first letter of each word
-    const pascal_case_req = Object.fromEntries(
-      Object.entries(req.body).map(([key, value]) => [
-        key,
-        value ? namingConvention.toPascalCase(value) : value,
-      ]),
-    );
+    const pascal_case_req: Record<string, string | null> = Object.fromEntries(
+      Object.entries(req.body as Record<string, string | null>).map(
+        ([key, value]) => [key, value ? toPascalCase(value) : value],
+      ) as Array<[string, string | null]>,
+    ); // in TypeScript, `Record<string, string | null>` is a utility type that represents an object type with keys of type string and values that can either be of type string or null (https://www.typescriptlang.org/docs/handbook/utility-types.html#recordkeys-type)
     const { title, cast, category } = pascal_case_req;
 
     // in ER Diagram, "Allow NULL" is set to false for `title`. Ensure it's provided in the request body
@@ -199,7 +199,7 @@ OUTPUT clause captures inserted attributes to be displayed in the front-end (htt
             .json({ success: "Movie added successfully.", movie: resultset });
         } else {
           // in case the movie already exists, the `INSERT INTO` + `OUTPUT` don't get executed, ie. result set is null
-          return res.status(409).json({
+          return res.status(201).json({
             conflict:
               "This movie already exists. Please try a different title.",
           });
@@ -242,7 +242,7 @@ app.get("/movie/:name", async (req: any, res: any) => {
               movie: rows,
             });
           } else {
-            return res.status(409).json({
+            return res.status(201).json({
               conflict: "Sorry, this movie is not in store at the moment.",
             });
           }
