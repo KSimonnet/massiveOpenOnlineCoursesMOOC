@@ -1,6 +1,6 @@
 import * as inquirer from "inquirer";
 
-class Account {
+export class Account {
   private user_id: number;
   public user_name: string;
   private password_hash: string;
@@ -44,7 +44,7 @@ class Account {
           return true;
         },
       },
-    ]);
+    ]); // returns in a Promise, a keyed Object whose keys are `"user_name"` and `"password_hash"` and values are what the user input respectively
   }
 }
 
@@ -65,7 +65,7 @@ class Watchlist {
   }
 }
 
-class Movie {
+export class Movie {
   private movie_id: number;
   public title: string;
   public cast: string;
@@ -78,7 +78,7 @@ class Movie {
     this.category = category;
   }
 
-  static async getMovieDetails() {
+  static async getMovieTitle() {
     return await inquirer.prompt([
       {
         type: "input",
@@ -95,7 +95,7 @@ class Movie {
     ]);
   }
 
-  static async getMovieFullDetails() {
+  static async getMovieDetails() {
     return await inquirer.prompt([
       {
         type: "input",
