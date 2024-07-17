@@ -18,6 +18,7 @@ export class Account {
     this.watchlist = new Watchlist(watchlist_id, user_id);
   }
 
+  // utility method
   static async getLoginCred() {
     return await inquirer.prompt([
       {
@@ -78,6 +79,7 @@ export class Movie {
     this.category = category;
   }
 
+  // utility method
   static async getMovieTitle() {
     return await inquirer.prompt([
       {
@@ -95,6 +97,7 @@ export class Movie {
     ]);
   }
 
+  // utility method
   static async getMovieDetails() {
     return await inquirer.prompt([
       {
@@ -120,6 +123,18 @@ export class Movie {
         message: "Enter the category the movie belongs to: ",
       },
     ]);
+  }
+
+  // display method
+  static displayMovieList(movieList: Movie[]) {
+    console.log(`Title            | Cast                | Category`);
+    console.log(`---------------------------------------------------`);
+    movieList.forEach((movie) => {
+      const char_num = 20;
+      const title = movie.title.padEnd(char_num, " "); // Ensures the title field is 16 characters long
+      const cast = movie.cast.padEnd(char_num, " "); // Ensures the cast field is 20 characters long
+      console.log(`${title} | ${cast} | ${movie.category}`);
+    });
   }
 }
 

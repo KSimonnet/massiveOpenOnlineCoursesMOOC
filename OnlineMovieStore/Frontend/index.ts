@@ -97,9 +97,10 @@ async function BrowseMovies() {
     // check if "success" is a property of `movies` (not inherited through the prototype chain). `"success" in is_authenticated` https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/in
     if (Object.prototype.hasOwnProperty.call(movies, "success")) {
       // display list of available movies
-      console.log(`${movies.success}: ${movies.list}`);
+      console.log(`${movies.success}`);
+      Movie.displayMovieList(movies.list);
     } else {
-      // inform user no movie is ain store
+      // inform user no movie is in store
       console.log(`${movies.conflict}`);
     }
   } catch (error: any) {
@@ -132,16 +133,16 @@ async function addMovie() {
       "http://localhost:3000/addmovie",
       request_data,
     );
-    const res = await response.json();
+    const added_movie = await response.json();
 
     // check if "success" is a property of the Object (not inherited through the prototype chain). `"success" in is_authenticated` https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/in
-    if (Object.prototype.hasOwnProperty.call(res, "success")) {
-      //
-      console.log(`${res.success}`);
-      return response;
+    if (Object.prototype.hasOwnProperty.call(added_movie, "success")) {
+      // display what movie has been added
+      console.log(`${added_movie.success}`);
+      Movie.displayMovieList(added_movie.movie);
     } else {
-      //
-      console.log(`${res.conflict}`);
+      // inform user the movie to add already exists
+      console.log(`${added_movie.conflict}`);
       return null;
     }
   } catch (error: any) {
@@ -154,7 +155,7 @@ async function addMovie() {
 async function searchMovies() {
   const { title } = await Movie.getMovieTitle();
   try {
-    const url = `http://localhost:3000/movie/${title}`;
+    const url = `http://localhost:3000/readmovie/${title}`;
     const response = await fetch(url);
     const movie = await response.json();
 
@@ -163,9 +164,11 @@ async function searchMovies() {
     }
     // check if "success" is a property of `movie` (not inherited through the prototype chain). `"success" in is_authenticated` https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/in
     if (Object.prototype.hasOwnProperty.call(movie, "success")) {
-      // movie requested by user is available
-      console.log(`${movie.success}: ${movie.movie}`);
+      // display movie requested by user
+      console.log(`${movie.success}`);
+      Movie.displayMovieList(movie.movie);
     } else {
+      // inform user the movie requested isn't in store
       console.log(`${movie.conflict}`);
     }
   } catch (error: any) {
@@ -197,16 +200,16 @@ async function updateMovie() {
       "http://localhost:3000/updatemovie",
       request_data,
     );
-    const res = await response.json();
+    const updated_movie = await response.json();
 
     // check if "success" is a property of the Object (not inherited through the prototype chain). `"success" in is_authenticated` https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/in
-    if (Object.prototype.hasOwnProperty.call(res, "success")) {
-      //
-      console.log(`${res.success}`);
-      return response;
+    if (Object.prototype.hasOwnProperty.call(updated_movie, "success")) {
+      // display the updated movie
+      console.log(`${updated_movie.success}`);
+      Movie.displayMovieList(updated_movie.movie);
     } else {
-      //
-      console.log(`${res.conflict}`);
+      // inform user the movie to update isn't in store
+      console.log(`${updated_movie.conflict}`);
       return null;
     }
   } catch (error: any) {
@@ -221,17 +224,18 @@ async function deleteMovie() {
   try {
     const url = `http://localhost:3000/deletemovie/${title}`;
     const response = await fetch(url);
-    const movie = await response.json();
-
+    const deleted_movie = await response.json();
     if (!response.ok) {
-      console.error(`${movie.error}`);
+      console.error(`${deleted_movie.error}`);
     }
-    // check if "success" is a property of `movie` (not inherited through the prototype chain). `"success" in is_authenticated` https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/in
-    if (Object.prototype.hasOwnProperty.call(movie, "success")) {
-      // movie requested by user is available
-      console.log(`${movie.success}: ${movie.movie}`);
+    // check if "success" is a property of `deleted_movie` (not inherited through the prototype chain). `"success" in is_authenticated` https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/in
+    if (Object.prototype.hasOwnProperty.call(deleted_movie, "success")) {
+      // confirm deletion of the movie to the user
+      console.log(`${deleted_movie.success}`);
+      Movie.displayMovieList(deleted_movie.movie);
     } else {
-      console.log(`${movie.conflict}`);
+      // inform user the movie to delete isn't in store
+      console.log(`${deleted_movie.conflict}`);
     }
   } catch (error: any) {
     console.error("An error occurred:", error.message);
