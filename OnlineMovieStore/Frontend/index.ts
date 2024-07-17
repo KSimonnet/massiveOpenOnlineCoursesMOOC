@@ -1,5 +1,5 @@
 import * as inquirer from "inquirer";
-import { getLoginCred } from "./modules/get-login-cred";
+import { Account, Movie } from "./classes/ERD";
 
 // // `MovieRequest` is a custom type for the request that leverages TypeScript to enforce the types at compile time,
 // // rather than running runtime checks.
@@ -12,7 +12,7 @@ import { getLoginCred } from "./modules/get-login-cred";
 
 async function login() {
   // runtime parameters check
-  const credentials = await getLoginCred();
+  const credentials = await Account.getLoginCred();
 
   try {
     const url = "http://localhost:3000/login";
@@ -46,10 +46,10 @@ async function login() {
 }
 
 async function signup() {
-  const credentials = await getLoginCred();
+  const credentials = await Account.getLoginCred();
 
   try {
-    // Construct the request data -hard-coded
+    // Construct the request data - TODO (hard-coded)
     const user: object = {
       user_name: credentials.user_name,
       password_hash: credentials.password_hash,
@@ -110,38 +110,14 @@ async function BrowseMovies() {
 // CRUD - Create
 async function addMovie() {
   // TODO - serialise by creating a generic function
-  const credentials = await inquirer.prompt([
-    {
-      type: "input",
-      name: "title",
-      message: "Enter the name of the movie you'd like to add: ",
-      required: true,
-      validate: function (user_input: string) {
-        // keep prompting user until a valid username is provided
-        if (!user_input) {
-          return "Movie title cannot be empty.";
-        }
-        return true;
-      },
-    },
-    {
-      type: "input",
-      name: "cast",
-      message: "Enter the name of the main actor/actress: ",
-    },
-    {
-      type: "input",
-      name: "category",
-      message: "Enter the category the movie belongs to: ",
-    },
-  ]);
+  const movie_details = await Movie.getMovieDetails();
 
   try {
-    // Construct the request data
+    // Construct the request data - TODO (hard-coded)
     const movie = {
-      title: credentials.title,
-      cast: credentials.cast,
-      category: credentials.category,
+      title: movie_details.title,
+      cast: movie_details.cast,
+      category: movie_details.category,
     };
     const request_data = {
       method: "POST",
@@ -176,24 +152,9 @@ async function addMovie() {
 
 // CRUD - Read
 async function searchMovies() {
-  const { name } = await inquirer.prompt([
-    {
-      type: "input",
-      name: "movie_name",
-      message: "Enter the name of the movie you want to search for: ",
-      required: true,
-      validate: function (user_input: string) {
-        // keep prompting user until a valid username is provided
-        if (!user_input) {
-          return "The movie name cannot be empty.";
-        }
-        return true;
-      },
-    },
-  ]);
-
+  const { title } = await Movie.getMovieTitle();
   try {
-    const url = `http://localhost:3000/movie/${name}`;
+    const url = `http://localhost:3000/movie/${title}`;
     const response = await fetch(url);
     const movie = await response.json();
 
@@ -214,38 +175,14 @@ async function searchMovies() {
 
 // CRUD - Update
 async function updateMovie() {
-  const credentials = await inquirer.prompt([
-    {
-      type: "input",
-      name: "title",
-      message: "Enter the name of the movie: ",
-      required: true,
-      validate: function (user_input: string) {
-        // keep prompting user until a valid username is provided
-        if (!user_input) {
-          return "Movie title cannot be empty.";
-        }
-        return true;
-      },
-    },
-    {
-      type: "input",
-      name: "cast",
-      message: "Enter the name of the main actor/actress: ",
-    },
-    {
-      type: "input",
-      name: "category",
-      message: "Enter the category the movie belongs to: ",
-    },
-  ]);
+  const movie_details = await Movie.getMovieDetails();
 
   try {
     // Construct the request data
     const movie = {
-      title: credentials.title,
-      cast: credentials.cast,
-      category: credentials.category,
+      title: movie_details.title,
+      cast: movie_details.cast,
+      category: movie_details.category,
     };
     const request_data = {
       method: "POST",
@@ -280,23 +217,9 @@ async function updateMovie() {
 
 // CRUD - Delete
 async function deleteMovie() {
-  const { name } = await inquirer.prompt([
-    {
-      type: "input",
-      name: "movie_name",
-      message: "Enter the name of the movie: ",
-      required: true,
-      validate: function (user_input: string) {
-        // keep prompting user until a valid username is provided
-        if (!user_input) {
-          return "The movie name cannot be empty.";
-        }
-        return true;
-      },
-    },
-  ]);
+  const { title } = await Movie.getMovieTitle();
   try {
-    const url = `http://localhost:3000/deletemovie/${name}`;
+    const url = `http://localhost:3000/deletemovie/${title}`;
     const response = await fetch(url);
     const movie = await response.json();
 
