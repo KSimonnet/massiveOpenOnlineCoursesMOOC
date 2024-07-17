@@ -107,46 +107,9 @@ async function BrowseMovies() {
   }
 }
 
-// CRUD - Read
-async function searchMovies() {
-  const requested_movie = await inquirer.prompt([
-    {
-      type: "input",
-      name: "movie_name",
-      message: "Enter the name of the movie you want to search for: ",
-      required: true,
-      validate: function (user_input: string) {
-        // keep prompting user until a valid username is provided
-        if (!user_input) {
-          return "The movie name cannot be empty.";
-        }
-        return true;
-      },
-    },
-  ]);
-  const movie_name = requested_movie.movie_name;
-  try {
-    const url = `http://localhost:3000/movie/${movie_name}`;
-    const response = await fetch(url);
-    const movie = await response.json();
-
-    if (!response.ok) {
-      console.error(`${movie.error}`);
-    }
-    // check if "success" is a property of `movie` (not inherited through the prototype chain). `"success" in is_authenticated` https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/in
-    if (Object.prototype.hasOwnProperty.call(movie, "success")) {
-      // movie requested by user is available
-      console.log(`${movie.success}: ${movie.movie}`);
-    } else {
-      console.log(`${movie.conflict}`);
-    }
-  } catch (error: any) {
-    console.error("An error occurred:", error.message);
-  }
-}
-
 // CRUD - Create
 async function addMovie() {
+  // TODO - serialise by creating a generic function
   const credentials = await inquirer.prompt([
     {
       type: "input",
@@ -211,9 +174,146 @@ async function addMovie() {
   }
 }
 
+// CRUD - Read
+async function searchMovies() {
+  const { name } = await inquirer.prompt([
+    {
+      type: "input",
+      name: "movie_name",
+      message: "Enter the name of the movie you want to search for: ",
+      required: true,
+      validate: function (user_input: string) {
+        // keep prompting user until a valid username is provided
+        if (!user_input) {
+          return "The movie name cannot be empty.";
+        }
+        return true;
+      },
+    },
+  ]);
+
+  try {
+    const url = `http://localhost:3000/movie/${name}`;
+    const response = await fetch(url);
+    const movie = await response.json();
+
+    if (!response.ok) {
+      console.error(`${movie.error}`);
+    }
+    // check if "success" is a property of `movie` (not inherited through the prototype chain). `"success" in is_authenticated` https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/in
+    if (Object.prototype.hasOwnProperty.call(movie, "success")) {
+      // movie requested by user is available
+      console.log(`${movie.success}: ${movie.movie}`);
+    } else {
+      console.log(`${movie.conflict}`);
+    }
+  } catch (error: any) {
+    console.error("An error occurred:", error.message);
+  }
+}
+
 // CRUD - Update
+async function updateMovie() {
+  const credentials = await inquirer.prompt([
+    {
+      type: "input",
+      name: "title",
+      message: "Enter the name of the movie: ",
+      required: true,
+      validate: function (user_input: string) {
+        // keep prompting user until a valid username is provided
+        if (!user_input) {
+          return "Movie title cannot be empty.";
+        }
+        return true;
+      },
+    },
+    {
+      type: "input",
+      name: "cast",
+      message: "Enter the name of the main actor/actress: ",
+    },
+    {
+      type: "input",
+      name: "category",
+      message: "Enter the category the movie belongs to: ",
+    },
+  ]);
+
+  try {
+    // Construct the request data
+    const movie = {
+      title: credentials.title,
+      cast: credentials.cast,
+      category: credentials.category,
+    };
+    const request_data = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(movie),
+    };
+
+    // make an HTTP POST request to the Back-End server
+    const response = await fetch(
+      "http://localhost:3000/updatemovie",
+      request_data,
+    );
+    const res = await response.json();
+
+    // check if "success" is a property of the Object (not inherited through the prototype chain). `"success" in is_authenticated` https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/in
+    if (Object.prototype.hasOwnProperty.call(res, "success")) {
+      //
+      console.log(`${res.success}`);
+      return response;
+    } else {
+      //
+      console.log(`${res.conflict}`);
+      return null;
+    }
+  } catch (error: any) {
+    console.error("An error occurred:", error.message);
+    return null;
+  }
+}
 
 // CRUD - Delete
+async function deleteMovie() {
+  const { name } = await inquirer.prompt([
+    {
+      type: "input",
+      name: "movie_name",
+      message: "Enter the name of the movie: ",
+      required: true,
+      validate: function (user_input: string) {
+        // keep prompting user until a valid username is provided
+        if (!user_input) {
+          return "The movie name cannot be empty.";
+        }
+        return true;
+      },
+    },
+  ]);
+  try {
+    const url = `http://localhost:3000/deletemovie/${name}`;
+    const response = await fetch(url);
+    const movie = await response.json();
+
+    if (!response.ok) {
+      console.error(`${movie.error}`);
+    }
+    // check if "success" is a property of `movie` (not inherited through the prototype chain). `"success" in is_authenticated` https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/in
+    if (Object.prototype.hasOwnProperty.call(movie, "success")) {
+      // movie requested by user is available
+      console.log(`${movie.success}: ${movie.movie}`);
+    } else {
+      console.log(`${movie.conflict}`);
+    }
+  } catch (error: any) {
+    console.error("An error occurred:", error.message);
+  }
+}
 
 async function displayMovieOptions() {
   console.log("Welcome to the Online Movie Store!");
@@ -224,6 +324,8 @@ async function displayMovieOptions() {
       "Browse Movies",
       "Search Movies",
       "Add a new movie",
+      "Update an existing movie",
+      "Delete an existing movie",
       "Logout",
     ];
 
@@ -245,6 +347,12 @@ async function displayMovieOptions() {
         break;
       case "Add a new movie":
         await addMovie();
+        break;
+      case "Update an existing movie":
+        await updateMovie();
+        break;
+      case "Delete an existing movie":
+        await deleteMovie();
         break;
       case "Logout":
         console.log("Logout successful!"); // Provide feedback to the user
