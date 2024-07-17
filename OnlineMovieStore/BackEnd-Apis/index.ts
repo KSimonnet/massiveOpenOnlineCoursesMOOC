@@ -213,8 +213,8 @@ OUTPUT clause captures inserted attributes to be displayed in the front-end (htt
   }
 });
 
-// CRUD - Review
-app.get("/movie/:name", async (req: any, res: any) => {
+// CRUD - Read
+app.get("/readmovie/:name", async (req: any, res: any) => {
   try {
     // type was already validated in Front-End; defined for clarity
     const title: string = req.params.name;
@@ -309,7 +309,7 @@ app.post("/updatemovie", async (req: any, res: any) => {
 });
 
 // CRUD - Delete
-app.post("/deletemovie/:name", async (req: any, res: any) => {
+app.get("/deletemovie/:name", async (req: any, res: any) => {
   try {
     // type was already validated in Front-End; defined for clarity
     const title: string = req.params.name;
