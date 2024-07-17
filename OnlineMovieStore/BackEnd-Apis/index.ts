@@ -5,7 +5,7 @@ import * as cors from "cors";
 import * as sql from "msnodesqlv8";
 
 import { transformValOf } from "./modules/transform-values-of";
-import { toPascalCase } from "./utils/manip-str/index";
+import { toPascalCase } from "../utils/manip-str/index";
 
 app.use(cors());
 app.use(bodyParser.json());
