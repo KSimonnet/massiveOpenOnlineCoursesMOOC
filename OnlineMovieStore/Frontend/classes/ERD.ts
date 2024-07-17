@@ -1,4 +1,5 @@
 import * as inquirer from "inquirer";
+import { toPascalCase } from "../../utils/manip-str/index";
 
 export class Account {
   private user_id: number;
@@ -127,13 +128,23 @@ export class Movie {
 
   // display method
   static displayMovieList(movieList: Movie[]) {
-    console.log(`Title            | Cast                | Category`);
-    console.log(`---------------------------------------------------`);
+    const char_num = 25;
+    const space = " ";
+    const dash = "-";
+    const header_row = Object.keys(movieList[0])
+      .map((header) => toPascalCase(header))
+      .map((header) => `${space}${header.padEnd(char_num, space)}`)
+      .join("|");
+    // set the display table design to equidistant columns
+    console.log(header_row);
+    console.log(`${dash.repeat(header_row.length)}`);
+    // populate table
     movieList.forEach((movie) => {
-      const char_num = 20;
-      const title = movie.title.padEnd(char_num, " "); // Ensures the title field is 16 characters long
-      const cast = movie.cast.padEnd(char_num, " "); // Ensures the cast field is 20 characters long
-      console.log(`${title} | ${cast} | ${movie.category}`);
+      const row = Object.keys(movie)
+        .map((key) => movie[key as keyof Movie])
+        .map((value) => `${space}${value.toString().padEnd(char_num, space)}`)
+        .join("|");
+      console.log(row);
     });
   }
 }
