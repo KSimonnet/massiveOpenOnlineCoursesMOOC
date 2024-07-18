@@ -25,19 +25,19 @@ async function login() {
       body: JSON.stringify(credentials),
     });
 
-    const is_authenticated: any = await response.json();
+    const res: any = await response.json();
     // Boolean stating whether the response was successful (status in the range 200-299) or not (https://developer.mozilla.org/en-US/docs/Web/API/Response/ok)
     if (!response.ok) {
-      console.error(`${is_authenticated.error}`);
+      console.error(`${res.error}`);
     }
-    // check if "success" is a property of `is_authenticated` (not inherited through the prototype chain). `"success" in is_authenticated` https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/in
-    if (Object.prototype.hasOwnProperty.call(is_authenticated, "success")) {
-      // a successful login turns `is_authenticated` to true, which allows access to `displayMovieOptions()
-      console.log(`${is_authenticated.success}`);
-      return true;
+    // check if "success" is a property of `res` (not inherited through the prototype chain). `"success" in res` https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/in
+    if (Object.prototype.hasOwnProperty.call(res, "success")) {
+      // a successful login turns `res` to true, which allows access to `displayMovieOptions()
+      console.log(`${res.success}`);
+      return { is_authenticated: true, is_admin: res.is_admin };
     } else {
-      console.log(`${is_authenticated.conflict}`);
-      return null; // indicates login failure
+      console.log(`${res.conflict}`);
+      return { is_authenticated: false, is_admin: false }; // indicates login failure
     }
   } catch (error: any) {
     console.error("HTTP error: ", error.message); // "Internal server error."
@@ -74,9 +74,12 @@ async function signup() {
     }
     // check if "success" is a property of `is_authenticated` (not inherited through the prototype chain). `"success" in is_authenticated` https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/in
     if (Object.prototype.hasOwnProperty.call(is_authenticated, "success")) {
-      return true; // successful login turns `is_authenticated` to true, which allows access to `displayMovieOptions()
+      // a successful login turns `is_authenticated` to true, which allows access to `displayMovieOptions()
+      console.log(`${is_authenticated.success}`);
+      return { is_authenticated: true, is_admin: !!is_authenticated.is_admin };
     } else {
-      return null; // indicates login failure
+      console.log(`${is_authenticated.conflict}`);
+      return { is_authenticated: false, is_admin: null }; // indicates login failure
     }
   } catch (error: any) {
     console.error("An error occurred:", error.message);
@@ -242,20 +245,23 @@ async function deleteMovie() {
   }
 }
 
-async function displayMovieOptions() {
+async function displayMovieOptions(is_admin: boolean) {
   console.log("Welcome to the Online Movie Store!");
+  const choices = [
+    "Browse all movies",
+    "Search a movie",
+    "Add a movie to your watchlist",
+    "Add a new movie",
+    "Update an existing movie",
+    "Delete an existing movie",
+    "Logout",
+  ];
 
-  // Infinite loop
+  // remove "Add a new movie", "Update an existing movie", "Delete an existing movie" if user is not an admin
+  if (!is_admin) choices.splice(3, 3); // mutates `choices` in-place
+
+  // infinite loop
   while (true) {
-    const choices = [
-      "Browse Movies",
-      "Search Movies",
-      "Add a new movie",
-      "Update an existing movie",
-      "Delete an existing movie",
-      "Logout",
-    ];
-
     const { action } = await inquirer.prompt([
       {
         type: "list",
@@ -266,20 +272,23 @@ async function displayMovieOptions() {
     ]);
 
     switch (action) {
-      case "Browse Movies":
+      case "Browse all movies":
         await BrowseMovies();
         break;
-      case "Search Movies":
+      case "Search a movie":
         await searchMovies();
         break;
       case "Add a new movie":
-        await addMovie();
+        if (is_admin) await addMovie();
+        else console.log("Unauthorized action.");
         break;
       case "Update an existing movie":
-        await updateMovie();
+        if (is_admin) await updateMovie();
+        else console.log("Unauthorized action.");
         break;
       case "Delete an existing movie":
-        await deleteMovie();
+        if (is_admin) await deleteMovie();
+        else console.log("Unauthorized action.");
         break;
       case "Logout":
         console.log("Logout successful!"); // Provide feedback to the user
@@ -289,11 +298,13 @@ async function displayMovieOptions() {
 }
 
 async function main() {
-  let user = null;
+  let is_authenticated: boolean = false;
+  let is_admin: boolean = false;
 
   // Infinite loop
   while (true) {
-    if (!user) {
+    //
+    if (!is_authenticated) {
       console.log("Please log in or sign up:");
       const loginOrSignup = await inquirer.prompt([
         {
@@ -305,19 +316,19 @@ async function main() {
       ]);
 
       if (loginOrSignup.choice === "Login") {
-        user = await login();
+        ({ is_authenticated, is_admin } = await login());
       } else if (loginOrSignup.choice === "Signup") {
-        user = await signup();
+        ({ is_authenticated, is_admin } = await signup());
       } else if (loginOrSignup.choice === "Exit") {
         console.log("Goodbye!");
         process.exit(0);
       }
     } else {
       // User is logged in, display movie-related options
-      await displayMovieOptions();
+      await displayMovieOptions(is_admin); //
 
       // After logging out from movie options, reset the user variable
-      user = null;
+      is_authenticated = false;
     }
   }
 }

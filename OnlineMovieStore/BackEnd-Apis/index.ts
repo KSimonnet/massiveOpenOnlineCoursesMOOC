@@ -25,7 +25,7 @@ app.post("/login", (req: any, res: any) => {
     }
 
     // Create a query to validate user credentials and return response
-    const check_query = `SELECT user_name, password_hash FROM Account WHERE user_name = ? AND password_hash = ?`; // https://learn.microsoft.com/en-us/sql/odbc/reference/develop-app/statement-parameters?view=sql-server-ver16
+    const check_query = `SELECT user_name, password_hash, is_admin FROM Account WHERE user_name = ? AND password_hash = ?`; // https://learn.microsoft.com/en-us/sql/odbc/reference/develop-app/statement-parameters?view=sql-server-ver16
     // the callback function of sql.query, whislt not async, is executed asynchronously
     // `try...catch` block only catches exceptions thrown synchronously within the `try` block
     // hence, exceptions should be directly handled inside the callback, rather being thrown
@@ -44,7 +44,13 @@ app.post("/login", (req: any, res: any) => {
         // handle case where `rows` is undefined or null
         if (rows && rows.length) {
           console.log("Credentials validated: ", rows);
-          return res.status(200).json({ success: "User authenticated." });
+          // return role access level to the Front-End
+          return res.status(200).json({
+            success: "User authenticated.",
+            is_admin: rows[0].is_admin,
+          }); /* even though the data type in DB is Bit, it is returned as a Boolean.
+          No need for converting Bit to Boolean. in `!!rows[0].is_admin` the first `!` negates the value,
+          turning thruty value `1` into false and falsy ones (`0` or `null`) into true. The second `!` reverts the original to Boolean. */
         } else {
           return res
             .status(201)
@@ -153,7 +159,7 @@ app.get("/movies", ({ req, res }: any) => {
 });
 
 // CRUD - Create
-app.post("/addmovie", async (req: any, res: any) => {
+app.post("/addmovie", (req: any, res: any) => {
   try {
     // capitalize the first letter of each word
     const pascal_case_req: Record<string, string | null> = transformValOf(
@@ -214,7 +220,7 @@ OUTPUT clause captures inserted attributes to be displayed in the front-end (htt
 });
 
 // CRUD - Read
-app.get("/readmovie/:name", async (req: any, res: any) => {
+app.get("/readmovie/:name", (req: any, res: any) => {
   try {
     // type was already validated in Front-End; defined for clarity
     const title: string = req.params.name;
@@ -253,7 +259,7 @@ app.get("/readmovie/:name", async (req: any, res: any) => {
 });
 
 // CRUD - Update
-app.post("/updatemovie", async (req: any, res: any) => {
+app.post("/updatemovie", (req: any, res: any) => {
   try {
     // capitalize the first letter of each word
     const pascal_case_req: Record<string, string | null> = transformValOf(
@@ -309,7 +315,7 @@ app.post("/updatemovie", async (req: any, res: any) => {
 });
 
 // CRUD - Delete
-app.get("/deletemovie/:name", async (req: any, res: any) => {
+app.get("/deletemovie/:name", (req: any, res: any) => {
   try {
     // type was already validated in Front-End; defined for clarity
     const title: string = req.params.name;

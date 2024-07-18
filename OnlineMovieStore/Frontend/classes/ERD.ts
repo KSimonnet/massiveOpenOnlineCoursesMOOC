@@ -5,6 +5,7 @@ export class Account {
   private user_id: number;
   public user_name: string;
   private password_hash: string;
+  private is_admin: boolean = false;
   watchlist: Watchlist; // One-to-One relationship. ie. Each `Account` has exactly one `Watchlist`
 
   constructor(
@@ -12,11 +13,13 @@ export class Account {
     user_name: string,
     password_hash: string,
     watchlist_id: number,
+    is_admin: boolean,
   ) {
     this.user_id = user_id;
     this.user_name = user_name;
     this.password_hash = password_hash;
     this.watchlist = new Watchlist(watchlist_id, user_id);
+    this.is_admin = is_admin;
   }
 
   // utility method
@@ -137,7 +140,7 @@ export class Movie {
       .join("|");
     // set the display table design to equidistant columns
     console.log(header_row);
-    console.log(`${dash.repeat(header_row.length)}`);
+    console.log(`${dash.repeat(header_row.length - 1)}`); // `- 1` stopped the jeopady of the design of the table
     // populate table
     movieList.forEach((movie) => {
       const row = Object.keys(movie)
