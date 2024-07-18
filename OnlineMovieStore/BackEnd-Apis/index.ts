@@ -6,6 +6,7 @@ import * as sql from "msnodesqlv8";
 
 import { transformValOf } from "./modules/transform-values-of";
 import { toPascalCase } from "../utils/manip-str/index";
+import { Account, Watchlist } from "../Frontend/classes/ERD";
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -25,7 +26,7 @@ app.post("/login", (req: any, res: any) => {
     }
 
     // Create a query to validate user credentials and return response
-    const check_query = `SELECT user_name, password_hash, is_admin FROM Account WHERE user_name = ? AND password_hash = ?`; // https://learn.microsoft.com/en-us/sql/odbc/reference/develop-app/statement-parameters?view=sql-server-ver16
+    const check_query = `SELECT * FROM Account WHERE user_name = ? AND password_hash = ?`; // https://learn.microsoft.com/en-us/sql/odbc/reference/develop-app/statement-parameters?view=sql-server-ver16
     // the callback function of sql.query, whislt not async, is executed asynchronously
     // `try...catch` block only catches exceptions thrown synchronously within the `try` block
     // hence, exceptions should be directly handled inside the callback, rather being thrown
@@ -43,7 +44,62 @@ app.post("/login", (req: any, res: any) => {
         }
         // handle case where `rows` is undefined or null
         if (rows && rows.length) {
+          /* Because of the One-to-One relationship between `Account` and `Watchlist`,
+          it was required to store an instance of `Watchlist`.
+          To be instantiated `Account` takes all key-value pairs in `rows` as parameters + `Watchlist` instance.
+          Hence, `Watchlist` needs to be instantiated before `Account`. */
+          /* `INSERT` not idempotent.Each execution of the statement will create a new record in the `Watchlist` table
+          with a newly auto-incremented `watchlist_id`. Hence the conditional check if a `Watchlist` already exists for the current `user_id`. */
+          /* `SELECT 1` does not retrieve any actual data from the column(s) of the table;
+          it simply returns the number `1` for each row that meets the condition.
+          The database engine stops scanning as soon as it finds the first matching row. */
+          /* Placeholders `?` are positional ie. for `NOT EXISTS`, the first `?` taps into the first element in the array of the parametrised query.
+          In index order, the next elements are used for `INSERT INTO`; and so forth.
+          Since `user_id` is passed onto all queries, it needs to be repeated. */
           console.log("Credentials validated: ", rows);
+          const user_id = rows[0].user_id;
+          const watchlist_query = `
+          IF NOT EXISTS (SELECT 1 FROM Watchlist WHERE user_id = ?)
+          BEGIN
+              INSERT INTO Watchlist (user_id) VALUES (?);
+              SELECT SCOPE_IDENTITY() AS LastInsertedId;
+          END
+          ELSE
+          BEGIN
+              SELECT watchlist_id AS LastInsertedId FROM Watchlist WHERE user_id = ?;
+          END
+          `; // `SCOPE_IDENTITY()` returns the last identity value generated for any table in the current session and the current scope (https://learn.microsoft.com/en-us/sql/t-sql/functions/scope-identity-transact-sql?view=sql-server-ver16)
+          sql.query(
+            connectionString,
+            watchlist_query,
+            [user_id, user_id, user_id],
+            (err: any, wl_rows: any) => {
+              if (err) {
+                console.error("SQL query error: ", err.message);
+                return res
+                  .status(500)
+                  .json({ error: "Internal server error." });
+              }
+              if (wl_rows && wl_rows.length) {
+                // instanciate a new `Watchlist` associated with this account
+                console.log("ID of the Watchlist created last: ", wl_rows);
+                const curr_watchlist = new Watchlist(
+                  wl_rows[0].LastInsertedId,
+                  user_id,
+                );
+
+                // instanciate a new `Account` as a Session Storage Mechanism
+                const userAccount = new Account(
+                  user_id,
+                  rows[0].user_name,
+                  rows[0].password_hash,
+                  rows[0].is_admin,
+                  curr_watchlist,
+                );
+              }
+            },
+          );
+
           // return role access level to the Front-End
           return res.status(200).json({
             success: "User authenticated.",
@@ -182,7 +238,7 @@ app.post("/addmovie", (req: any, res: any) => {
 `; /* `SELECT 1` does not retrieve any actual data from the column(s) of the table;
 it simply returns the number `1` for each row that meets the condition.
 The database engine stops scanning as soon as it finds the first matching row.
-Placeholders (?) are positional ie. for `NOT EXISTS`, the first `?` taps into the first element in the array of the parametrised query.
+Placeholders `?` are positional ie. for `NOT EXISTS`, the first `?` taps into the first element in the array of the parametrised query.
 In index order, the next elements are used for `INSERT INTO`. Since `title` is passed onto both queries, it needs to be repeated.
 In a stored procedure, we could use named parameters e.g. @title https://learn.microsoft.com/en-us/sql/odbc/reference/develop-app/binding-parameters-by-name-named-parameters?view=sql-server-ver16
 
@@ -366,10 +422,46 @@ app.get("/deletemovie/:name", (req: any, res: any) => {
   }
 });
 
-// error handling
-// add movies to watchlist
-// role-based access control, allowing different levels of access for regular users and administrators. Can login as an Admin or User. Administrators (and Users) should be able to add, update, delete, and view movie data.
-// use of TypeScript classes and interfaces to define entities and relationships
+// add a movie to watchlist
+app.post("/towatchlist", (req: any, res: any) => {
+  try {
+    const { movie_id, watchlist_id } = req.body;
+    // TODO - validate movie_id and watchlist_id here
+
+    const query = `
+    INSERT INTO Watchlist_Item (watchlist_id, movie_id)
+    VALUES (?, ?);
+  `;
+
+    sql.query(
+      connectionString,
+      query,
+      [watchlist_id, movie_id],
+      (err: any, result: any) => {
+        /////////////////////////// TODO - Update the control flow ///////////////////////////
+        if (err) {
+          console.error("SQL query error: ", err.message);
+          return res.status(500).json({ error: "Internal server error." });
+        }
+        if (result && result.length) {
+          console.log("Movie added to watchlist: ", result);
+          return res.status(200).json({
+            success: "Movie successfully added to watchlist.",
+            movie: result,
+          });
+        } else {
+          // in case the movie doesn't exist, the `OUTPUT` doesn't get executed, ie. result set is null
+          return res.status(201).json({
+            conflict: "Sorry, this movie is not in store at the moment.",
+          });
+        }
+      },
+    );
+  } catch (err: any) {
+    console.error("An error occurred: ", err.message);
+    return res.status(501).json({ error: "Internal server error." });
+  }
+});
 
 app.listen(3000, () => {
   console.log("BE server running");
