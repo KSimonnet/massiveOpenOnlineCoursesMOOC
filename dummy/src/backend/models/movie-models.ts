@@ -1,11 +1,12 @@
 export default class MovieModel {
-  private db: any;
+  private db: any; // Connection type based on msnodesqlv8
 
   constructor(dbConnection: any) {
     this.db = dbConnection;
   }
 
-  create(
+  // CRUD - Create
+  addMovie(
     movie: { title: string; cast: string; category: string },
     callback: Function,
   ): void {
@@ -31,10 +32,44 @@ export default class MovieModel {
     );
   }
 
+  // CRUD - Read
   read(title: string, callback: Function): void {
     const query = "SELECT title, cast, category FROM Movie WHERE title = ?";
     this.db.query(query, [title], callback);
   }
 
-  // Add update and delete methods similarly
+  // CRUD - Update
+  update(
+    movie: { title: string; cast: string; category: string },
+    callback: Function,
+  ): void {
+    // check if movie already exists
+    const query = `
+      IF EXISTS (SELECT 1 FROM Movie WHERE title = ?)
+      BEGIN
+      UPDATE Movie
+      SET title = ?, cast = ?, category = ?
+      OUTPUT INSERTED.*
+      WHERE title COLLATE SQL_Latin1_General_CP1_CI_AI LIKE ?
+      END
+    `;
+    this.db.query(
+      query,
+      [movie.title, movie.title, movie.cast, movie.category, movie.title],
+      callback,
+    );
+  }
+
+  // CRUD - Delete
+  deleteByTitle(title: string, callback: Function): void {
+    const query = `
+      IF EXISTS (SELECT 1 FROM Movie WHERE title = ?)
+      BEGIN
+        DELETE FROM Movie
+        OUTPUT DELETED.*
+        WHERE title COLLATE SQL_Latin1_General_CP1_CI_AI LIKE ?
+      END
+    `;
+    this.db.query(query, [title, title], callback);
+  }
 }
