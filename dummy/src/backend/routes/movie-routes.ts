@@ -2,7 +2,7 @@ import * as express from "express";
 const router = express.Router();
 import * as sql from "msnodesqlv8";
 import MovieModel from "../models/movie-models";
-import { MovieController } from "../controllers/movieController";
+import { MovieController } from "../controllers/movie-controller";
 
 // Initialize database connection
 const connectionString =
