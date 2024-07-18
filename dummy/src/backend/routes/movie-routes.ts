@@ -17,6 +17,9 @@ sql.open(connectionString, (err, dbConn) => {
   const movieModel = new MovieModel(dbConn);
   const movieController = new MovieController(movieModel);
 
+  // browse all movies
+  router.get("/movies", (req, res) => movieController.listMovies(req, res));
+
   // CRUD - Create
   router.post("/addmovie", (req, res) => movieController.addMovie(req, res));
 

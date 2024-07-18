@@ -5,6 +5,12 @@ export default class MovieModel {
     this.db = dbConnection;
   }
 
+  // browse all movies
+  listAllMovies(callback: Function): void {
+    const query = "SELECT title, cast, category FROM Movie";
+    this.db.query(query, callback);
+  }
+
   // CRUD - Create
   addMovie(
     movie: { title: string; cast: string; category: string },

@@ -1,4 +1,5 @@
-// dummy/src/backend/controllers/movieController.ts
+import { toPascalCase } from "../../utils/manip-str/index";
+import { transformValOf } from "../modules/transform-values-of";
 import MovieModel from "../models/movie-models";
 
 export class MovieController {
@@ -6,6 +7,32 @@ export class MovieController {
 
   constructor(movieModel: MovieModel) {
     this.movieModel = movieModel;
+  }
+
+  // browse all movies
+  listMovies(req: any, res: any): void {
+    try {
+      this.movieModel.listAllMovies((err: any, rows: any) => {
+        if (err) {
+          /* directly exposing error details from the server, especially those originating from a database,
+            can provide attackers with insights into the backend structure, database schema, or even potential vulnerabilities.
+            In addition, a generic error message is more user-friendly */
+          console.error("SQL query error: ", err.message);
+          return res.status(500).json({ error: "Internal server error." });
+        }
+        if (rows && rows.length) {
+          console.log("List of movies sent to Front-End: ", rows);
+          return res.status(200).json({ success: "Movie list: ", list: rows });
+        } else {
+          return res.status(201).json({
+            conflict: "Sorry, we've no movies available at the moment.",
+          });
+        }
+      });
+    } catch (error: any) {
+      console.error("An error occurred:", error.message);
+      res.status(501).json({ error: "Internal server error." });
+    }
   }
 
   // CRUD - Create
