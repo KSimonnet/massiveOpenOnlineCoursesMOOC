@@ -161,11 +161,6 @@ export class Movie {
   }
 }
 
-interface IMovie {
-  movie_id: number;
-  title: string;
-}
-
 // serves as an associative entity that represents a Many-to-Many relationship between `Watchlist` and `Movie`
 class Watchlist_Item {
   private watchlist_id: number; // One-to-Many relationship (ie. An instance of `Watchlist` can contain multiple instances of `Watchlist_Item`.

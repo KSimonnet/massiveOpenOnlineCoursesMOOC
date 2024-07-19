@@ -15,8 +15,8 @@ async function login() {
       },
       body: JSON.stringify(credentials),
     });
-
     const res: any = await response.json();
+
     // Boolean stating whether the response was successful (status in the range 200-299) or not (https://developer.mozilla.org/en-US/docs/Web/API/Response/ok)
     if (!response.ok) {
       console.error(`${res.error}`);

@@ -61,6 +61,7 @@ app.post("/login", (req: any, res: any) => {
                   .json({ error: "Internal server error." });
               }
               if (user_rows && user_rows.length) {
+                console.log("Current user authenticated: ", user_rows);
                 const user_id = user_rows[0].user_id;
                 /* Because of the One-to-One relationship between `Account` and `Watchlist`,
                 it was required to store an instance of `Watchlist`.
