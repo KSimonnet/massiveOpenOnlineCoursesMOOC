@@ -12,7 +12,7 @@ app.use(cors());
 app.use(bodyParser.json());
 
 const connectionString =
-  "server=ADMINLenovo;Database=OnlineMovieStore;Trusted_Connection=Yes;Driver={ODBC Driver 17 for SQL Server}"; // SERVERNAME
+  "server=SERVERNAME;Database=OnlineMovieStore;Trusted_Connection=Yes;Driver={ODBC Driver 17 for SQL Server}";
 let curr_account: Account;
 let curr_watchlist: Watchlist;
 
