@@ -20,6 +20,7 @@ async function login() {
     // Boolean stating whether the response was successful (status in the range 200-299) or not (https://developer.mozilla.org/en-US/docs/Web/API/Response/ok)
     if (!response.ok) {
       console.error(`${res.error}`);
+      return { is_authenticated: false, is_admin: false }; // TypeScript is strict and requires uniform return types
     }
     // check if "success" is a property of `res` (not inherited through the prototype chain). `"success" in res` https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/in
     if (Object.prototype.hasOwnProperty.call(res, "success")) {
@@ -32,7 +33,7 @@ async function login() {
     }
   } catch (error: any) {
     console.error("HTTP error: ", error.message); // "Internal server error."
-    return null;
+    return { is_authenticated: false, is_admin: false };
   }
 }
 
@@ -41,7 +42,7 @@ async function signup() {
 
   try {
     // Construct the request data - TODO (hard-coded)
-    const user: object = {
+    const user_cred: object = {
       user_name: credentials.user_name,
       password_hash: credentials.password_hash,
     };
@@ -50,31 +51,30 @@ async function signup() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(user),
+      body: JSON.stringify(user_cred),
     };
 
     // make an HTTP POST request to the Back-End server
     const response = await fetch("http://localhost:3000/signup", request_data);
+    const res: any = await response.json();
 
-    // Provide feedback to the user as to:
-    // - Invalid username or password
-    // - OR, username already exists
-    const is_authenticated: any = await response.json();
+    // Provide feedback to the user whether, username already exists
     if (!response.ok) {
-      console.error(`${is_authenticated.error}`);
+      console.error(`${res.error}`);
+      return { is_authenticated: false, is_admin: false };
     }
-    // check if "success" is a property of `is_authenticated` (not inherited through the prototype chain). `"success" in is_authenticated` https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/in
-    if (Object.prototype.hasOwnProperty.call(is_authenticated, "success")) {
-      // a successful login turns `is_authenticated` to true, which allows access to `displayMovieOptions()
-      console.log(`${is_authenticated.success}`);
-      return { is_authenticated: true, is_admin: !!is_authenticated.is_admin };
+    // check if "success" is a property of `res` (not inherited through the prototype chain). `"success" in res` https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/in
+    if (Object.prototype.hasOwnProperty.call(res, "success")) {
+      // a successful login turns `res` to true, which allows access to `displayMovieOptions()
+      console.log(`${res.success}`);
+      return { is_authenticated: true, is_admin: !!res.is_admin };
     } else {
-      console.log(`${is_authenticated.conflict}`);
-      return { is_authenticated: false, is_admin: null }; // indicates login failure
+      console.log(`${res.conflict}`);
+      return { is_authenticated: false, is_admin: false }; // indicates login failure
     }
   } catch (error: any) {
     console.error("An error occurred:", error.message);
-    return null;
+    return { is_authenticated: false, is_admin: false };
   }
 }
 

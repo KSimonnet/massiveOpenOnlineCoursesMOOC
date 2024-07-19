@@ -53,18 +53,18 @@ app.post("/login", (req: any, res: any) => {
             connectionString,
             check_query,
             [user_name, password_hash],
-            (err: any, rows: any) => {
+            (err: any, user_rows: any) => {
               if (err) {
                 console.error("SQL query error: ", err.message);
                 return res
                   .status(500)
                   .json({ error: "Internal server error." });
               }
-              if (rows && rows.length) {
-                const user_id = rows[0].user_id;
+              if (user_rows && user_rows.length) {
+                const user_id = user_rows[0].user_id;
                 /* Because of the One-to-One relationship between `Account` and `Watchlist`,
                 it was required to store an instance of `Watchlist`.
-                To be instantiated `Account` takes all key-value pairs in `rows` as parameters + `Watchlist` instance.
+                To be instantiated `Account` takes all key-value pairs in `user_rows` as parameters + `Watchlist` instance.
                 Hence, `Watchlist` needs to be instantiated before `Account`. */
                 /* `INSERT`is not idempotent ie. each execution of the statement will create a new record in the `Watchlist` table
                 with a newly auto-incremented `watchlist_id`. Hence the conditional check if a `Watchlist` already exists for the current `user_id`. */
@@ -110,9 +110,9 @@ app.post("/login", (req: any, res: any) => {
                       // instanciate a new `Account` as a Session Storage Mechanism
                       curr_account = new Account(
                         user_id,
-                        rows[0].user_name,
-                        rows[0].password_hash,
-                        rows[0].is_admin,
+                        user_rows[0].user_name,
+                        user_rows[0].password_hash,
+                        user_rows[0].is_admin,
                         curr_watchlist,
                       );
                     }
@@ -122,9 +122,9 @@ app.post("/login", (req: any, res: any) => {
                 // return role access level to the Front-End
                 return res.status(200).json({
                   success: "User authenticated.",
-                  is_admin: rows[0].is_admin,
+                  is_admin: user_rows[0].is_admin,
                 }); /* even though the data type in DB is Bit, it is returned as a Boolean.
-                    No need for converting Bit to Boolean. in `!!rows[0].is_admin` the first `!` negates the value,
+                    No need for converting Bit to Boolean. in `!!user_rows[0].is_admin` the first `!` negates the value,
                     turning thruty value `1` into false and falsy ones (`0` or `null`) into true. The second `!` reverts the original to Boolean. */
               } else {
                 return res
@@ -155,12 +155,12 @@ app.post("/signup", (req: any, res: any) => {
     }
 
     // check if `user_name` already exists
-    const check_query = `SELECT 1 FROM Account WHERE user_name = ?)`;
+    const check_query = `SELECT 1 FROM Account WHERE user_name = ?`;
     sql.query(
       connectionString,
       check_query,
       [user_name],
-      (err: any, rows: any) => {
+      (err: any, check_rows: any) => {
         if (err) {
           // directly exposing error details from the server, especially those originating from a database,
           // can provide attackers with insights into the backend structure, database schema, or even potential vulnerabilities.
@@ -169,14 +169,102 @@ app.post("/signup", (req: any, res: any) => {
           return res.status(500).json({ error: "Internal server error." });
         }
         // check if user already exists
-        if (rows && rows.length) {
-          console.log("Existing account: ", rows);
+        if (check_rows && check_rows.length) {
+          console.log("Existing account: ", check_rows);
           return res.status(401).json({
             conflict:
               "This username is already taken. Please try again with a different one",
           });
         } else {
           // TODO - instantiate a new `Account` and `Watchlist` for the current session
+          const check_query = `INSERT INTO Account (user_name, password_hash) OUTPUT INSERTED.* VALUES (?,?)`;
+          // the callback function of sql.query, whislt not async, is executed asynchronously
+          // `try...catch` block only catches exceptions thrown synchronously within the `try` block
+          // hence, exceptions should be directly handled inside the callback, rather being thrown
+          sql.query(
+            connectionString,
+            check_query,
+            [user_name, password_hash],
+            (err: any, resultset: any) => {
+              if (err) {
+                console.error("SQL query error: ", err.message);
+                return res
+                  .status(500)
+                  .json({ error: "Internal server error." });
+              }
+              if (resultset && resultset.length) {
+                const user_id = resultset[0].user_id;
+                /* Because of the One-to-One relationship between `Account` and `Watchlist`,
+                it was required to store an instance of `Watchlist`.
+                To be instantiated `Account` takes all key-value pairs in `resultset` as parameters + `Watchlist` instance.
+                Hence, `Watchlist` needs to be instantiated before `Account`. */
+                /* `INSERT`is not idempotent ie. each execution of the statement will create a new record in the `Watchlist` table
+                with a newly auto-incremented `watchlist_id`. Hence the conditional check if a `Watchlist` already exists for the current `user_id`. */
+                /* `SELECT 1` does not retrieve any actual data from the column(s) of the table;
+                it simply returns the number `1` for each row that meets the condition.
+                The database engine stops scanning as soon as it finds the first matching row. */
+                /* Placeholders `?` are positional ie. for `NOT EXISTS`, the first `?` taps into the first element in the array of the parametrised query.
+                In index order, the next elements are used for `INSERT INTO`; and so forth.
+                Since `user_id` is passed onto all queries, it needs to be repeated. */
+                const watchlist_query = `
+                  IF NOT EXISTS (SELECT 1 FROM Watchlist WHERE user_id = ?)
+                  BEGIN
+                      INSERT INTO Watchlist (user_id) VALUES (?);
+                      SELECT SCOPE_IDENTITY() AS LastInsertedId;
+                  END
+                  ELSE
+                  BEGIN
+                      SELECT watchlist_id AS LastInsertedId FROM Watchlist WHERE user_id = ?;
+                  END
+                  `; // `SCOPE_IDENTITY()` returns the last identity value generated for any table in the current session and the current scope (https://learn.microsoft.com/en-us/sql/t-sql/functions/scope-identity-transact-sql?view=sql-server-ver16)
+                sql.query(
+                  connectionString,
+                  watchlist_query,
+                  [user_id, user_id, user_id],
+                  (err: any, wl_rows: any) => {
+                    if (err) {
+                      console.error("SQL query error: ", err.message);
+                      return res
+                        .status(500)
+                        .json({ error: "Internal server error." });
+                    }
+                    if (wl_rows && wl_rows.length) {
+                      // instanciate a new `Watchlist` associated with this account
+                      console.log(
+                        "ID of the Watchlist created last: ",
+                        wl_rows,
+                      );
+                      curr_watchlist = new Watchlist(
+                        wl_rows[0].LastInsertedId,
+                        user_id,
+                      );
+
+                      // instanciate a new `Account` as a Session Storage Mechanism
+                      curr_account = new Account(
+                        user_id,
+                        resultset[0].user_name,
+                        resultset[0].password_hash,
+                        resultset[0].is_admin,
+                        curr_watchlist,
+                      );
+                    }
+                  },
+                );
+
+                // return role access level to the Front-End
+                return res.status(200).json({
+                  success: "User authenticated.",
+                  is_admin: resultset[0].is_admin,
+                }); /* even though the data type in DB is Bit, it is returned as a Boolean.
+                    No need for converting Bit to Boolean. in `!!resultset[0].is_admin` the first `!` negates the value,
+                    turning thruty value `1` into false and falsy ones (`0` or `null`) into true. The second `!` reverts the original to Boolean. */
+              } else {
+                return res
+                  .status(201)
+                  .json({ conflict: "Invalid credentials. Please try again." });
+              }
+            },
+          );
         }
       },
     );
