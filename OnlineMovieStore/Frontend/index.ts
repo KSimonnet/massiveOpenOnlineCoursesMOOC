@@ -1,15 +1,6 @@
 import * as inquirer from "inquirer";
 import { Account, Movie } from "./classes/ERD";
 
-// // `MovieRequest` is a custom type for the request that leverages TypeScript to enforce the types at compile time,
-// // rather than running runtime checks.
-// // The Request interface is located within the directory: `@types/express` > `index.d.ts`
-// interface MovieRequest extends Request {
-//   params: {
-//     name: string;
-//   };
-// }
-
 async function login() {
   // runtime parameters check
   const credentials = await Account.getLoginCred();
@@ -111,9 +102,30 @@ async function BrowseMovies() {
   }
 }
 
+async function addMovieToWatchlist() {
+  const { title } = await Movie.getMovieTitle();
+  try {
+    const url = `http://localhost:3000/towatchlist/${title}`;
+    const response = await fetch(url);
+    const watchlist_movie = await response.json();
+
+    // check if "success" is a property of the Object (not inherited through the prototype chain). `"success" in is_authenticated` https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/in
+    if (Object.prototype.hasOwnProperty.call(watchlist_movie, "success")) {
+      // display what movie has been added
+      console.log(`${watchlist_movie.success}`);
+    } else {
+      // inform user the movie to add already exists
+      console.log(`${watchlist_movie.conflict}`);
+      return null;
+    }
+  } catch (error: any) {
+    console.error("An error occurred:", error.message);
+    return null;
+  }
+}
+
 // CRUD - Create
 async function addMovie() {
-  // TODO - serialise by creating a generic function
   const movie_details = await Movie.getMovieDetails();
 
   try {
@@ -250,7 +262,7 @@ async function displayMovieOptions(is_admin: boolean) {
   const choices = [
     "Browse all movies",
     "Search a movie",
-    "Add a movie to your watchlist",
+    "Add a movie to my watchlist",
     "Add a new movie",
     "Update an existing movie",
     "Delete an existing movie",
@@ -277,6 +289,9 @@ async function displayMovieOptions(is_admin: boolean) {
         break;
       case "Search a movie":
         await searchMovies();
+        break;
+      case "Add a movie to my watchlist":
+        await addMovieToWatchlist();
         break;
       case "Add a new movie":
         if (is_admin) await addMovie();
