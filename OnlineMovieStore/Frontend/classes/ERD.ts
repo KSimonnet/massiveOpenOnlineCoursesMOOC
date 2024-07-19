@@ -6,20 +6,20 @@ export class Account {
   public user_name: string;
   private password_hash: string;
   private is_admin: boolean = false;
-  watchlist: Watchlist; // One-to-One relationship. ie. Each `Account` has exactly one `Watchlist`
+  private watchlist: Watchlist; // One-to-One relationship. ie. Each `Account` has exactly one `Watchlist`
 
   constructor(
     user_id: number,
     user_name: string,
     password_hash: string,
-    watchlist_id: number,
     is_admin: boolean,
+    watchlist: Watchlist,
   ) {
     this.user_id = user_id;
     this.user_name = user_name;
     this.password_hash = password_hash;
-    this.watchlist = new Watchlist(watchlist_id, user_id);
     this.is_admin = is_admin;
+    this.watchlist = watchlist;
   }
 
   // utility method
@@ -51,23 +51,32 @@ export class Account {
       },
     ]); // returns in a Promise, a keyed Object whose keys are `"user_name"` and `"password_hash"` and values are what the user input respectively
   }
+
+  // utility method
+  getPublicData(): IAccountPublicData {
+    return {
+      user_id: this.user_id,
+      is_admin: this.is_admin,
+      watchlist_id: this.watchlist.watchlist_id,
+    };
+  }
 }
 
-interface IAccount {
-  user_id: number;
-  user_name: string;
-  passwrod_hash: string;
-  watchlist: Watchlist;
-}
-
-class Watchlist {
-  private watchlist_id: number;
+export class Watchlist {
+  watchlist_id: number;
   private user_id: number;
 
   constructor(watchlist_id: number, user_id: number) {
     this.watchlist_id = watchlist_id;
     this.user_id = user_id;
   }
+}
+
+// subset of the `Account` class that is safe to be publicly exposed
+export interface IAccountPublicData {
+  user_id: number;
+  is_admin: boolean;
+  watchlist_id: number;
 }
 
 export class Movie {
