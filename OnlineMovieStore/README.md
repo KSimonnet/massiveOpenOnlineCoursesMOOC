@@ -25,7 +25,9 @@ replace `SERVERNAME` by pasting what you've just copied
 
 9. Create 4 tables as described in the file `onlineMovieStore-assignment.drawio.svg` along with their respective relationships
 
-10. In the ribbon, select `New Query`. This will open a blank page 11. Paste in the following queries:
+10. In the ribbon, select `New Query`. This will open a blank page
+
+11. Paste in the following queries:
 
 ```
 USE OnlineMovieStore
@@ -42,7 +44,7 @@ VALUES
 ```
 then select `Execute`
 
-This will insert records in the database.
+This will insert dummy records in the database.
 
 ## Initialise your EDI
 
@@ -63,12 +65,13 @@ This will insert records in the database.
 
 #### Run the application
 
-A TypeScript file `index.ts` is located each Frontend and BackEnd-Apis folders (`src/Frontend`, `src/BackEnd-Apis`).
+A TypeScript file `index.ts` is located in both, Frontend and BackEnd-Apis folders (`src/Frontend`, `src/BackEnd-Apis`).
 
 1. In both the Terminals (`src/Frontend`, `src/BackEnd-Apis`), run the following command:
    `$ npm run start`.
    The Terminal for `src/Frontend` should output to the console: "Please log in or sign up:"
    The Terminal for `src/BackEnd-Apis` should output to the console: "BE server running"
+
 2. In the Terminal for `src/Frontend` a CLI should display the following options:
    "
 
