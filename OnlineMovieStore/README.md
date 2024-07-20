@@ -42,7 +42,7 @@ VALUES
 ('Indiana Jones', 'Harrison Ford', 'Adventure'),
 ('Lethal Weapon', 'Mel Gibson', 'Action');
 ```
-then select `Execute`
+then, select `Execute`
 
 This will insert dummy records in the database.
 
@@ -53,14 +53,17 @@ This will insert dummy records in the database.
 2. Open two split Terminals aka CLI (Command Line Interface)
 
  - In one, navigate to: `src/Frontend` by running the following command:
+
    `$ cd ./frontend`
 
  - In the other one, navigate to: `src/BackEnd-Apis` by running the following command:
+
    `$ cd ./backend-apis`
 
 ### Install dependencies
 
 1. In both the Terminals (`src/Frontend`, `src/BackEnd-Apis`) run the following command:
+
    `$ npm install`
 
 #### Run the application
@@ -69,16 +72,18 @@ A TypeScript file `index.ts` is located in both, Frontend and BackEnd-Apis folde
 
 1. In both the Terminals (`src/Frontend`, `src/BackEnd-Apis`), run the following command:
    `$ npm run start`.
-   The Terminal for `src/Frontend` should output to the console: "Please log in or sign up:"
-   The Terminal for `src/BackEnd-Apis` should output to the console: "BE server running"
+   The Terminal for `src/Frontend` should output to the console:
+*"Please log in or sign up:"*
+   The Terminal for `src/BackEnd-Apis` should output to the console:
+*"BE server running"*
 
 2. In the Terminal for `src/Frontend` a CLI should display the following options:
-   "
-
+*"
 - Login
 - Signup
 - Exit
-  "
-  Select `Login` and press "Enter"
+  "*
 
-3. To the CLI prompts `Enter your username:` and `Enter your password:` try the two types of users: Admin and regular user by entering the credentials of each users you've created at step "Pre-requisites" ie. "Admin", "pwd" OR "user", "pwd"
+Select `Login` and press "Enter"
+
+3. To the CLI prompts `Enter your username:` and `Enter your password:` try the two types of users: Admin and regular user, by entering the credentials of each users you've created at step "Pre-requisites" ie. *"Admin"*, *"pwd"* OR *"user"*, *"pwd"*.
