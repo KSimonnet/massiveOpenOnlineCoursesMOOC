@@ -71,19 +71,22 @@ This will insert dummy records in the database.
 A TypeScript file `index.ts` is located in both, Frontend and BackEnd-Apis folders (`src/Frontend`, `src/BackEnd-Apis`).
 
 1. In both the Terminals (`src/Frontend`, `src/BackEnd-Apis`), run the following command:
-   `$ npm run start`.
-   The Terminal for `src/Frontend` should output to the console:
+
+   `$ npm run start`
+
+The Terminal for `src/Frontend` should output to the console:
+
 *"Please log in or sign up:"*
-   The Terminal for `src/BackEnd-Apis` should output to the console:
+
+The Terminal for `src/BackEnd-Apis` should output to the console:
+
 *"BE server running"*
 
 2. In the Terminal for `src/Frontend` a CLI should display the following options:
-*"
-- Login
-- Signup
-- Exit
-  "*
+- *Login*
+- *Signup*
+- *Exit*
 
-Select `Login` and press "Enter"
+Select `Login` and press "Enter".
 
 3. To the CLI prompts `Enter your username:` and `Enter your password:` try the two types of users: Admin and regular user, by entering the credentials of each users you've created at step "Pre-requisites" ie. *"Admin"*, *"pwd"* OR *"user"*, *"pwd"*.
