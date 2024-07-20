@@ -7,7 +7,6 @@
 3. Open the file located at: `src/BackEnd-Apis/index.ts`
 
 4. In the line:
-
 ```
 const connectionString =
   "server=SERVERNAME;Database=OnlineMovieStore;Trusted_Connection=Yes;Driver={ODBC Driver 17 for SQL Server}";
@@ -46,7 +45,7 @@ then, select `Execute`
 
 This will insert dummy records in the database.
 
-## Initialise your EDI
+# Initialise your EDI
 
 1. In your preferred EDI (Integrated Development Environment), open the root directory `src` of the project
 
@@ -60,13 +59,13 @@ This will insert dummy records in the database.
 
    `$ cd ./backend-apis`
 
-### Install dependencies
+# Install dependencies
 
 1. In both the Terminals (`src/Frontend`, `src/BackEnd-Apis`) run the following command:
 
    `$ npm install`
 
-#### Run the application
+# Run the application
 
 A TypeScript file `index.ts` is located in both, Frontend and BackEnd-Apis folders (`src/Frontend`, `src/BackEnd-Apis`).
 
