@@ -3,32 +3,6 @@
   let curr_video = "";
   let curr_video_bookmarks = [];
 
-  chrome.runtime.onMessage.addListener((message, sender, response) => {
-    const { type, value, video_id } = message;
-    if (type === "NEW") {
-      curr_video = video_id;
-      newVideoLoaded();
-    }
-  });
-
-  const newVideoLoaded = async () => {
-    let bookmark_btn = document.querySelector(".bookmark-btn"); // Returns null if button doesn't exist (https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection/item)
-    curr_video_bookmarks = await fetchBookmarks();
-    if (!bookmark_btn) {
-      bookmark_btn = document.createElement("img");
-      bookmark_btn.src = chrome.runtime.getURL("assets/bookmark.png");
-      bookmark_btn.class_name = `yt-btn bookmark-btn`;
-      bookmark_btn.title = "Click to bookmark current timestamp";
-
-      yt_left_ctrl = document.querySelector(".ytp-left-controls"); // document.getElementsByClassName("ytp-left-controls").item(0);
-      yt_player = document.querySelector(".video-stream");
-      yt_left_ctrl.appendChild(bookmark_btn);
-      yt_left_ctrl.addEventListener("click", addNewBookmarkEventHandler);
-
-      bookmark_btn.classList.add("bookmark-btn");
-    }
-  };
-
   const addNewBookmarkEventHandler = async () => {
     const curr_time = yt_player.currentTime;
     const new_bookmark = {
@@ -45,14 +19,73 @@
     });
   };
 
-  function fetchBookmarks() {
+  const newVideoLoaded = async () => {
+    let bookmark_btn = document.querySelector(".bookmark-btn"); // Returns null if button doesn't exist
+    curr_video_bookmarks = await fetchBookmarks();
+    if (!bookmark_btn) {
+      bookmark_btn = document.createElement("img");
+      bookmark_btn.src = chrome.runtime.getURL("assets/bookmark.png");
+      bookmark_btn.classList.add("ytp-button", "bookmark-btn"); // rather than `bookmark_btn.className` in order not to overwrite any existing classes
+      bookmark_btn.title = "Click to bookmark current timestamp";
+
+      yt_left_ctrl = document.getElementsByClassName("ytp-left-controls")[0];
+      yt_player = document.getElementsByClassName("video-stream")[0];
+
+      yt_left_ctrl.appendChild(bookmark_btn);
+      bookmark_btn.addEventListener("click", addNewBookmarkEventHandler);
+
+      // const appendBookmarkButton = () => {
+      //   try {
+      //     yt_left_ctrl = document.querySelector(".ytp-left-controls");
+      //     if (yt_left_ctrl) {
+      //       yt_left_ctrl.appendChild(bookmark_btn);
+      //       yt_left_ctrl.addEventListener("click", addNewBookmarkEventHandler);
+      //       observer.disconnect(); // Stop observing once the element is found and the button is appended
+      //     }
+      //   } catch (error) {
+      //     console.error("Error appending bookmark button:", error);
+      //   }
+      // };
+
+      // const observer = new MutationObserver((mutations) => {
+      //   mutations.forEach(() => {
+      //     appendBookmarkButton();
+      //   });
+      // });
+
+      // observer.observe(document.body, { childList: true, subtree: true });
+
+      // // Try to append the button immediately in case the element is already present
+      // appendBookmarkButton();
+    }
+  };
+
+  const fetchBookmarks = () => {
     return new Promise((resolve) => {
-      chrome.storage.sync.get(curr_video, (data) => {
+      chrome.storage.sync.get([curr_video], (data) => {
         console.log("chrome.storage data: ", data);
         resolve(data[curr_video] ? JSON.parse(data[curr_video]) : []);
       });
     });
-  }
+  };
+
+  chrome.runtime.onMessage.addListener((message, sender, response) => {
+    const { type, bkm_timestamp, video_id } = message;
+    if (type === "NEW") {
+      curr_video = video_id;
+      newVideoLoaded();
+    } else if (type === "PLAY") {
+      yt_player.currentTime = bkm_timestamp; // .seekTo(value)
+    } else if (type === "DELETE") {
+      curr_video_bookmarks = curr_video_bookmarks.filter(
+        (bookmark) => bookmark.time !== bkm_timestamp,
+      );
+      chrome.storage.sync.set({
+        [curr_video]: JSON.stringify(curr_video_bookmarks),
+      });
+      response(curr_video_bookmarks);
+    }
+  });
 
   newVideoLoaded();
 })();
