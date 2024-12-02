@@ -1,7 +1,9 @@
-// https://developer.chrome.com/docs/extensions/reference/api/tabs#get_the_current_tab
+// // https://developer.chrome.com/docs/extensions/reference/api/tabs#get_the_current_tab
 export async function getCurrentTab() {
-  let queryOptions = { active: true, lastFocusedWindow: true };
-  // `tab` will either be a `tabs.Tab` instance or `undefined`.
-  let [tab] = await chrome.tabs.query(queryOptions);
-  return tab;
+  const tabs = await chrome.tabs.query({
+    currentWindow: true,
+    active: true,
+  });
+
+  return tabs[0];
 }
